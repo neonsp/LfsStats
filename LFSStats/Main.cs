@@ -19,15 +19,7 @@
  */
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using DotNetExtensions;
 
 // TODO check cargame.nl stats when somebody may have done a split but not a complete lap and it includes them in stats
 // on top with weird impossible lap time of best possible lap
@@ -187,6 +179,7 @@ namespace LFSStatistics
 				}
 				//TODO CSV, TSV user names
 				PrintHeader();
+
 				LFSClient lfsclient = new LFSClient(options.ConfigFileName, options.RefreshInterval);
 			}
 		}
@@ -311,7 +304,7 @@ namespace LFSStatistics
 				HasShutdownStarted = true;
 				LFSStats.WriteLine("\nGoodbye.");	// TODO split conditions to Time of day: sunrise, ... Wind: low.
 				Environment.Exit(exitCode);			// TODO HTML escape names and what ever I export to HTML
-			}	// TODO convert colors=IS.NET, convert LFS->Unicode=IS.NET, convert Unicode->ASCII via .NET
+			}
 		}
 		private static bool hasShutdownStarted = false;
 		public static bool HasShutdownStarted

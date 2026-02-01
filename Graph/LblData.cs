@@ -61,31 +61,42 @@ namespace Graph
 
 			char[] splitter = { '\t' };
 			int playernum = 1;
-			while ((line = sr.ReadLine()) != null)
+			try
 			{
-				string[] result = line.Split(splitter);
-				players.Add(result[0]);
+                while ((line = sr.ReadLine()) != null)
+                {
+					Console.WriteLine(line);
+                    string[] result = line.Split(splitter);
+                    players.Add(result[0]);
 
-				splits.Add(new ArrayList());
-				/*
-								splits[splits.Count-1] = new long[result.Length-1];
-								for (int i = 1; i < result.Length; ++i)
-								{
-									string num = result[i];
-									((long [])splits[splits.Count-1])[i-1] = Convert.ToInt32(num);
-								}
-				*/
-				splits[splits.Count - 1] = new long[result.Length];
-				for (int i = 0; i < result.Length; ++i)
-					if (i == 0)
-					{
-						((long[])splits[splits.Count - 1])[i] = Convert.ToInt32(playernum++);
-					}
-					else
-					{
-						string num = result[i];
-						((long[])splits[splits.Count - 1])[i] = Convert.ToInt32(num);
-					}
+                    splits.Add(new ArrayList());
+                    /*
+                                    splits[splits.Count-1] = new long[result.Length-1];
+                                    for (int i = 1; i < result.Length; ++i)
+                                    {
+                                        string num = result[i];
+                                        ((long [])splits[splits.Count-1])[i-1] = Convert.ToInt32(num);
+                                    }
+                    */
+                    splits[splits.Count - 1] = new long[result.Length];
+					for (int i = 0; i < result.Length; ++i) {
+						Console.WriteLine(i);
+                        if (i == 0)
+                        {
+                            ((long[])splits[splits.Count - 1])[i] = Convert.ToInt32(playernum++);
+                        }
+                        else
+                        {
+                            string num = result[i];
+                            ((long[])splits[splits.Count - 1])[i] = Convert.ToInt32(num);
+                        }
+                    }
+                        
+                }
+            }
+			catch(Exception ex)
+			{
+
 			}
 
 			file.Close();

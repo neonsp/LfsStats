@@ -25,6 +25,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using DotNetExtensions;
+using InSimDotNet.Packets;
 
 namespace LFSStatistics
 {
@@ -59,35 +60,8 @@ namespace LFSStatistics
 
 		public static string lfsStripColor(string str)
 		{
-			return str.Replace("^0", "")
-						.Replace("^1", "")
-						.Replace("^2", "")
-						.Replace("^3", "")
-						.Replace("^4", "")
-						.Replace("^5", "")
-						.Replace("^6", "")
-						.Replace("^7", "")
-						.Replace("^8", "")
-						.Replace("^9", "");
-			//.Replace("^O", "")
-			//.Replace("^a", "*")
-			//.Replace("^c", ":")
-			//.Replace("^d", "\\")
-			//.Replace("^l", "&lt;")
-			//.Replace("^q", "?")
-			//.Replace("^r", "&gt;")
-			//.Replace("^s", "/")
-			//.Replace("^t", "\"")
-			//.Replace("^v", "|")
-			//.Replace("^^", "&circ;")
-			//.Replace("^L", "")
-			//.Replace("^G", "")
-			//.Replace("^C", "")
-			//.Replace("^J", "")
-			//.Replace("^E", "")
-			//.Replace("^M", "")
-			//.Replace("^T", "")
-			//.Replace("^B", "");
+			if (string.IsNullOrWhiteSpace(str)) return str;
+			return InSimDotNet.Helpers.StringHelper.StripColors(str);
 		}
 		public static string lfsChatTextToHtml(string str)
 		{
@@ -227,7 +201,7 @@ namespace LFSStatistics
 					resultLine = resultLine.Replace("]", "");
 					resultLine = resultLine.Replace("{Position}", curPos.ToString());
 					//                    resultLine = resultLine.Replace("{Position}", p.resultNum.ToString() );
-					resultLine = resultLine.Replace("{PlayerName}", p.NickName);	// TODO strip color and escape characters
+					resultLine = resultLine.Replace("{PlayerName}", lfsStripColor(p.NickName));
 					resultLine = resultLine.Replace("{UserName}", p.userName);
 					resultLine = resultLine.Replace("{Car}", p.carName);
 					// if Racer do not finish
@@ -254,7 +228,7 @@ namespace LFSStatistics
 					resultLine = resultLine.Replace("{PitsDone}", p.numStop.ToString());
 					resultLine = resultLine.Replace("{Penalty}", p.penalty);
 					resultLine = resultLine.Replace("{PosGrid}", p.gridPos.ToString());
-					//resultLine = resultLine.Replace("{Flags}", p.sFlags);// FIXME
+					resultLine = resultLine.Replace("{Flags}", p.sFlags);
 					sw.WriteLine(resultLine);
 				}
 			}
@@ -289,7 +263,7 @@ namespace LFSStatistics
 				{
 					SessionStats p = raceStatsList[i];
 
-					sw.Write(p.NickName);	// TODO strip color and escape characters
+					sw.Write(lfsStripColor(p.NickName));
 					long lastCumul = 0;
 					for (int j = 0; j < p.lap.Count; j++)
 					{
@@ -298,18 +272,18 @@ namespace LFSStatistics
 							continue;
 						if (sessionInfo.maxSplit >= 1)
 						{
-							sw.Write("\t" + (lastCumul + (p.lap[j]).Split[0]) * 10);
+							sw.Write("\t" + (lastCumul + (p.lap[j]).Split[0]) * 1);
 							//                            sw.Write("(" + LfsTimeToString((p.lap[j]).split1) + "," + LfsTimeToString((p.lap[j]).LapTime) + ")");
 						}
 						if (sessionInfo.maxSplit >= 2)
 						{
-							sw.Write("\t" + (lastCumul + (p.lap[j]).Split[1]) * 10);
+							sw.Write("\t" + (lastCumul + (p.lap[j]).Split[1]) * 1);
 						}
 						if (sessionInfo.maxSplit >= 3)
 						{
-							sw.Write("\t" + (lastCumul + (p.lap[j]).Split[2]) * 10);
+							sw.Write("\t" + (lastCumul + (p.lap[j]).Split[2]) * 1);
 						}
-						sw.Write("\t" + (lastCumul + (p.lap[j]).LapTime) * 10);
+						sw.Write("\t" + (lastCumul + (p.lap[j]).LapTime) * 1);
 						lastCumul = lastCumul + (p.lap[j]).LapTime;
 					}
 					sw.Write("\r\n");
@@ -567,7 +541,7 @@ namespace LFSStatistics
 							outputBlock.Replace("{BestLap}", SessionStats.LfsTimeToString(playerStats.bestLap));
 							outputBlock.Replace("{LapsDone}", playerStats.lap.Count.ToString());
 							outputBlock.Replace("{PitsDone}", playerStats.numStop.ToString());
-							//outputBlock.Replace("{Flags}", playerStats.sFlags);
+							outputBlock.Replace("{Flags}", playerStats.sFlags);
 							outputBlock.Replace("{AutoClutch}", playerStats.GetPlayerFlagAutoClutch());
 							outputBlock.Replace("{AutoGearShift}", playerStats.GetPlayerFlagAutoGearShift());
 							outputBlock.Replace("{AxisClutch}", playerStats.GetPlayerFlagAxisClutch());
@@ -1232,51 +1206,51 @@ namespace LFSStatistics
 							for (int j = 0; j < playerStats.pit.Count; j++)
 							{
 								SWork = "{lg_lap} " + ((playerStats.pit[j] as Pit).LapsDone + 1) + ":";
-								long Work = (playerStats.pit[j] as Pit).Work;
+								var Work = playerStats.pit[j].Work;
 
-								if ((Work & (long)InSim.PIT_work.PSE_STOP) != 0)
+								if ((Work & PitWorkFlags.PSE_STOP) != 0)
 								{
 									SWork = SWork + virg + " {lg_stop}";
 									virg = ", ";
 								}
-								if ((Work & (long)InSim.PIT_work.PSE_SETUP) != 0)
+								if ((Work & PitWorkFlags.PSE_SETUP) != 0)
 								{
 									SWork = SWork + virg + "{lg_dam_set}";
 									virg = ", ";
 								}
 								if (
-									(Work & (long)InSim.PIT_work.PSE_FR_DAM) != 0
-									|| (Work & (long)InSim.PIT_work.PSE_RE_DAM) != 0
-									|| (Work & (long)InSim.PIT_work.PSE_LE_FR_DAM) != 0
-									|| (Work & (long)InSim.PIT_work.PSE_RI_FR_DAM) != 0
-									|| (Work & (long)InSim.PIT_work.PSE_LE_RE_DAM) != 0
-									|| (Work & (long)InSim.PIT_work.PSE_RI_RE_DAM) != 0
+									   (Work & PitWorkFlags.PSE_FR_DAM) != 0
+									|| (Work & PitWorkFlags.PSE_RE_DAM) != 0
+									|| (Work & PitWorkFlags.PSE_LE_FR_DAM) != 0
+									|| (Work & PitWorkFlags.PSE_RI_FR_DAM) != 0
+									|| (Work & PitWorkFlags.PSE_LE_RE_DAM) != 0
+									|| (Work & PitWorkFlags.PSE_RI_RE_DAM) != 0
 									)
 								{
 									SWork = SWork + virg + "{lg_dam_mec}";
 									virg = ", ";
 								}
 								if (
-									(Work & (long)InSim.PIT_work.PSE_BODY_MINOR) != 0
-									|| (Work & (long)InSim.PIT_work.PSE_BODY_MAJOR) != 0
+									(Work & PitWorkFlags.PSE_BODY_MINOR) != 0
+									|| (Work & PitWorkFlags.PSE_BODY_MAJOR) != 0
 									)
 								{
 									SWork = SWork + virg + "{lg_dam_body}";
 									virg = ", ";
 								}
 								if (
-									(Work & (long)InSim.PIT_work.PSE_FR_WHL) != 0
-									|| (Work & (long)InSim.PIT_work.PSE_LE_FR_WHL) != 0
-									|| (Work & (long)InSim.PIT_work.PSE_RI_FR_WHL) != 0
-									|| (Work & (long)InSim.PIT_work.PSE_RE_WHL) != 0
-									|| (Work & (long)InSim.PIT_work.PSE_LE_RE_WHL) != 0
-									|| (Work & (long)InSim.PIT_work.PSE_RI_RE_WHL) != 0
+									(Work & PitWorkFlags.PSE_FR_WHL) != 0
+									|| (Work & PitWorkFlags.PSE_LE_FR_WHL) != 0
+									|| (Work & PitWorkFlags.PSE_RI_FR_WHL) != 0
+									|| (Work & PitWorkFlags.PSE_RE_WHL) != 0
+									|| (Work & PitWorkFlags.PSE_LE_RE_WHL) != 0
+									|| (Work & PitWorkFlags.PSE_RI_RE_WHL) != 0
 									)
 								{
 									SWork = SWork + virg + "{lg_dam_whe}";
 									virg = ", ";
 								}
-								if ((Work & (long)InSim.PIT_work.PSE_REFUEL) != 0)
+								if ((Work & PitWorkFlags.PSE_REFUEL) != 0)
 								{
 									SWork = SWork + virg + " {lg_refuel}";
 									virg = ", ";
@@ -1312,12 +1286,12 @@ namespace LFSStatistics
 							for (int j = 0; j < playerStats.pen.Count; j++)
 							{
 								string strPen = "";
-								if ((playerStats.pen[j] as Penalty).NewPen != (int)InSim.pen.PENALTY_NONE)
-									strPen = Enum.GetName(typeof(InSim.pen), (playerStats.pen[j] as Penalty).NewPen);
+								if ((playerStats.pen[j]).NewPen != (int)PenaltyValue.PENALTY_NONE)
+									strPen = Enum.GetName(typeof(PenaltyValue), (playerStats.pen[j]).NewPen);
 								else
-									strPen = Enum.GetName(typeof(InSim.pen), (playerStats.pen[j] as Penalty).OldPen);
+									strPen = Enum.GetName(typeof(PenaltyValue), (playerStats.pen[j]).OldPen);
 								strPen = "{lg_" + strPen.Remove(0, 8) + "}";
-								penaltyInfo += "{lg_lap} " + (playerStats.pen[j] as Penalty).Lap.ToString() + ": " + strPen.ToLower();
+								penaltyInfo += "{lg_lap} " + (playerStats.pen[j]).Lap.ToString() + ": " + strPen.ToLower();
 								penaltyInfo += "<BR>";
 
 							}
@@ -2238,7 +2212,7 @@ namespace LFSStatistics
 			str = str.Replace("{PROJECTURL}", LFSStats.ProjectUrl);
 			// session information substitution
 			str = str.Replace("{ServerName}", lfsColorToHtml(sessionInfo.HName));
-			str = str.Replace("{TrackName}", InSim.Decoder.getLongTrackName(sessionInfo.trackNameCode));
+			str = str.Replace("{TrackName}", InSimDotNet.Helpers.TrackHelper.GetFullTrackName(sessionInfo.trackNameCode));
 			str = str.Replace("{TrackNameShort}", sessionInfo.trackNameCode);
 			str = str.Replace("{TrackImg}", sessionInfo.trackNameCode.ToLower() + ".gif");
 
@@ -2259,8 +2233,9 @@ namespace LFSStatistics
 				str = str.Replace("{SessionLength}", sessionInfo.qualMins.ToString() + " " + lang["lg_durationMins"]);
 
 			str = str.Replace("{TrackConditions}", strWeather[sessionInfo.weather] + ", " + strWind[sessionInfo.wind]);
-			str = str.Replace("{LapByLapGraphFileName}", fileName + "_lbl.png");
-			str = str.Replace("{RaceProgressGraphFileName}", fileName + "_rpr.png");
+			var baseName = fileName.Replace(".html", string.Empty);
+			str = str.Replace("{LapByLapGraphFileName}", baseName + "_lbl.png");
+			str = str.Replace("{RaceProgressGraphFileName}", baseName + "_rpr.png");
 			str = str.Replace("{CombinedBestLap}", SessionStats.LfsTimeToString(combinedBestLap));
 
 			return str;

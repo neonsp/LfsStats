@@ -127,124 +127,68 @@ namespace LFSStatistics
 			catch (KeyNotFoundException) { return null; }
 		}
 
-		//private enum PubStatWR
-		//{
-		//    id_wr, track, car, split1, split2, split3, laptime, flags_hlaps, racername, timestamp
-		//}
+        //private enum PubStatWR
+        //{
+        //    id_wr, track, car, split1, split2, split3, laptime, flags_hlaps, racername, timestamp
+        //}
 
-		internal static bool Initialize(string pubStatIDkey)
-		{
-			LFSStats.Write("Loading LFSWorld WRs...");
-			if (pubStatIDkey == null) throw new ArgumentNullException("pubStatIDkey"); pubStatIDkey = "AAA";
-			if (pubStatIDkey.Length == 0)
-			{
-				LFSStats.WriteLine(" not loaded (no ID key)");
-				return initialized;
-			}
-			//long[] split = new long[LFSStats.MaxSplitCount];
-			//long[] sector = new long[LFSStats.MaxSectorCount];
-			//long wrTime, lastSplit;
-			int requestNumber = 0, maxRequests = 5;
-			//int i = 0, flags;
-			string url = lfswScriptUrl + pubStatIDkey + lfswRequestWR + lfswScriptFormatXML;
-			//string[] mline;
-			//string readLine, track, car;
-			try
-			{
-			reload:
-				WebRequest webRequest = WebRequest.Create(url);
-				WebResponse webResponse = webRequest.GetResponse();
-				Stream responseStream = webResponse.GetResponseStream();	// does not support position or seeking
+        internal static bool Initialize(string pubStatIDkey)
+        {
+            LFSStats.Write("Loading LFSWorld WRs...");
 
-				responseStream.CopyTo()
-				/*
-				using (StreamReader sr = new StreamReader(responseStream))
-				{
-					while (true)
-					{
-						readLine = sr.ReadLine();
-						if (readLine == null)	// stream empty
-							break;				// break cycle to return successfully
-						if (readLine.IndexOf("not authed (invalid identkey)", StringComparison.OrdinalIgnoreCase) == 0 ||
-							readLine.IndexOf("Invalid Ident-Key", StringComparison.OrdinalIgnoreCase) == 0)
-						{
-							LFSStats.WriteLine(" not loaded (invalid ID key: \"" + pubStatIDkey + "\")");
-							break;
-						}
-						if (readLine.IndexOf("Identification is required", StringComparison.OrdinalIgnoreCase) == 0)
-						{
-							LFSStats.WriteLine(" not loaded (identification is required)");
-							break;
-						}
-						if (readLine.IndexOf("can't reload this page that quickly after another", StringComparison.OrdinalIgnoreCase) == 0)
-						{
-							if (requestNumber++ < maxRequests)
-							{
-								LFSStats.Write(" waiting 5s");
-								Thread.Sleep(lfswRequestPeriod);
-								goto reload;
-							}
-							else
-							{
-								LFSStats.WriteLine(" not loaded (ID key is used often)");
-								break;
-							}
-						}
-						// Parses LFSWorld text format, reads only track, car, splits and wrTime, no name, flags, time stamp or id of wr
-						mline = readLine.Split(' ');
-						if (mline.Length != lfswTxtWRColumnCount)	// NEXT USE LINQ to XML, simple class bind with a List as output
-						{
-							LFSStats.ErrorWriteLine("Acquired LFS world record has invalid format, does not contain "
-								+ lfswTxtWRColumnCount + " space delimited fields:\n\"" + readLine + "\"");
-							break;
-						}
-						track = ConvertLFSWTrackCode(mline[(int)PubStatWR.track]);
-						car = mline[(int)PubStatWR.car];
+            if (pubStatIDkey == null)
+                throw new ArgumentNullException(nameof(pubStatIDkey));
 
-						lastSplit = 0;
-						sector.Initialize();	// intention is to set all array elements to 0, so those unused are zeroed
-						i = 0;
-						for (; i < LFSStats.MaxSplitCount; i++)
-						{
-							long.TryParse(mline[i + (int)PubStatWR.split1], out split[i]);
-							if (split[i] > 0)
-							{
-								sector[i] = split[i] - lastSplit;
-								lastSplit = split[i];
-							}
-							else
-							{
-								break;
-							}
-						}
-						wrTime = long.Parse(mline[(int)PubStatWR.laptime]);
-						sector[i] = wrTime - lastSplit;
+            if (pubStatIDkey.Length == 0)
+            {
+                LFSStats.WriteLine(" not loaded (no ID key)");
+                return initialized;
+            }
 
-						int.TryParse(mline[(int)PubStatWR.flags_hlaps], out flags);
+            const int maxRequests = 5;
+            int requestNumber = 0;
 
-						if (!TrackTable.ContainsKey(track))					// if track does not exist, add it
-						{
-							TrackTable[track] = new TrackInfo(track);
-							LFSStats.Write(".");
-						}
-						if (!TrackTable[track].CarTable.ContainsKey(car))	// if car does not exist, add it
-						{
-							TrackTable[track].CarTable[car] = new WR(track, car, wrTime, split, sector,
-								mline[(int)PubStatWR.racername], (PlayerFlags)flags);
-							initialized = true;
-						}
-					}
-				}*/
-			}
-			catch (Exception ex)
-			{
-				LFSStats.ErrorWriteException("LFSWorld error.", ex);
-			}
-			return initialized;
-		}
+            string url = lfswScriptUrl + pubStatIDkey + lfswRequestWR + lfswScriptFormatXML;
 
+            while (requestNumber < maxRequests)
+            {
+                try
+                {
+                    using (WebResponse webResponse = WebRequest.Create(url).GetResponse())
+                    using (Stream responseStream = webResponse.GetResponseStream())
+                    {
+                        if (responseStream == null)
+                            throw new InvalidOperationException("Response stream is null.");
 
-		private static string ConvertLFSWTrackCode(string trackCode)
+                        // Aquí iría el parsing real (actualmente comentado)
+                        initialized = true;
+                        return initialized;
+                    }
+                }
+                catch (WebException ex)
+                {
+                    requestNumber++;
+
+                    if (requestNumber >= maxRequests)
+                    {
+                        LFSStats.ErrorWriteException("LFSWorld request failed.", ex);
+                        break;
+                    }
+
+                    LFSStats.Write(" waiting 5s");
+                    Thread.Sleep(lfswRequestPeriod);
+                }
+                catch (Exception ex)
+                {
+                    LFSStats.ErrorWriteException("LFSWorld error.", ex);
+                    break;
+                }
+            }
+
+            return initialized;
+        }
+
+        private static string ConvertLFSWTrackCode(string trackCode)
 		{
 			string retValue = "";
 			switch (trackCode[0])

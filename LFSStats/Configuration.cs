@@ -175,8 +175,9 @@ namespace LFSStatistics
 				ReportError(_language, defLanguage, language);
 				language = defLanguage;
 			}
-			// practice directory
-			if (!config.TryGetValue(_pracDir, out pracDir) || pracDir.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
+            ExportStats.getLang(language);
+            // practice directory
+            if (!config.TryGetValue(_pracDir, out pracDir) || pracDir.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
 			{
 				ReportError(_pracDir, defPracDir, pracDir);
 				pracDir = defPracDir;

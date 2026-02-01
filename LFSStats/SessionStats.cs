@@ -17,13 +17,9 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
-using DotNetExtensions;
+using InSimDotNet.Packets;
 
 namespace LFSStatistics
 {
@@ -70,33 +66,41 @@ namespace LFSStatistics
 			CumuledTime = cumuledTime;
 		}
 	}
-	class Pit
-	{
-		public int LapsDone;
-		public int Flags;
-		public int Penalty;
-		public int NumStop;
-		public int rearL;
-		public int rearR;
-		public int frontL;
-		public int frontR;
-		public long Work;
-		public long STime;
+    // Pit now wraps the InSimDotNet IS_PIT packet and exposes commonly used fields
+    class Pit
+    {
+        public int LapsDone;
+        //public PlayerFlags Flags;
+        public PenaltyValue Penalty;
+        public int NumStop;
+        public TyreCompound RearLeft;
+        public TyreCompound RearRight;
+        public TyreCompound FrontLeft;
+        public TyreCompound FrontRight;
+        public PitWorkFlags Work;
+        public long STime;
 
-		public Pit(int LapsDone, int Flags, int Penalty, int NumStop, int rearL, int rearR, int frontL, int frontR, long Work)
-		{
-			this.LapsDone = LapsDone;
-			this.Flags = Flags;
-			this.Penalty = Penalty;
-			this.NumStop = NumStop;
-			this.rearL = rearL;
-			this.rearR = rearR;
-			this.frontL = frontL;
-			this.frontR = frontR;
-			this.Work = Work;
-			this.STime = 0;
-		}
-	}
+        // Keep original packet if needed for later use
+        public IS_PIT Packet { get; private set; }
+
+        public Pit(IS_PIT pit)
+        {
+            if (pit == null) throw new ArgumentNullException(nameof(pit));
+
+            Packet = pit;
+            LapsDone = pit.LapsDone;
+            //Flags = pit.Flags;
+            Penalty = pit.Penalty;
+            NumStop = pit.NumStops;
+            // Tyres structure from InSimDotNet
+            RearLeft = pit.Tyres.RearLeft;
+            RearRight = pit.Tyres.RearRight;
+            FrontLeft = pit.Tyres.FrontLeft;
+            FrontRight = pit.Tyres.FrontRight;
+            Work = pit.Work;
+            STime = 0;
+        }
+    }
 
 	class SessionStats : IComparable<SessionStats>
 	{
@@ -154,12 +158,19 @@ namespace LFSStatistics
 		public bool inBlue;
 
 		private PlayerFlags flags;
-		public int Flags
+		public InSimDotNet.Packets.PlayerFlags Flags
 		{
-			private get { return (int)flags; }
-			set { flags = (PlayerFlags)value; }
+			get;
+			set;
 		}
-		public List<Lap> lap = new List<Lap>();
+        public string sFlags
+        {
+            get
+            {
+                return Flags != 0 ? Flags.ToString().Replace(",", string.Empty) : string.Empty;
+            }
+        }
+        public List<Lap> lap = new List<Lap>();
 		public List<Pit> pit = new List<Pit>();
 		public List<Penalty> pen = new List<Penalty>();
 		public List<Toc> toc = new List<Toc>();
@@ -307,31 +318,11 @@ namespace LFSStatistics
 
 		public static string LfsTimeToString(long val)
 		{
-			long sec;
-			long min;
-			long hun;
-			string sign = "";
-
-			if (val < 0)
-			{
-				val = -val;
-				sign = "-";
-			}
-			sec = val / 1000;
-			hun = sec * 1000;
-			hun = (val - hun) / 10;
-
-			val = sec;
-			min = val / 60;
-			sec = min * 60;
-			sec = val - sec;
-			return string.Format("{3}{0}:{1,2:D2}.{2,2:D2}", min, sec, hun, sign);
+			return InSimDotNet.Helpers.StringHelper.ToLapTimeString(TimeSpan.FromMilliseconds(val));
 		}
 		public static string LfsSpeedToString(int val)
 		{
-			float speed;
-			speed = ((float)val * 45) / 4096;
-			return (string.Format("{0:F2}", speed));
+			return Math.Round(InSimDotNet.Helpers.MathHelper.SpeedToKph(val), 2).ToString();
 		}
 
 		public void UpdateSplit(int split, long splitTime)
@@ -421,7 +412,7 @@ namespace LFSStatistics
 				return;
 			int LapDone = this.lap.Count + 1;
 			this.pen.Add(new Penalty(LapDone, OldPen, NewPen, Reason));
-			if (NewPen != (int)InSim.pen.PENALTY_NONE)
+			if (NewPen != (int)PenaltyValue.PENALTY_NONE)
 				this.numPen++;
 		}
 		public void updateMCI(int speed)
@@ -432,12 +423,13 @@ namespace LFSStatistics
 				lapBestSpeed = lap.Count + 1;
 			}
 		}
-		public void updatePIT(InSim.Decoder.PIT pitDec)
+		public void updatePIT(IS_PIT pitDec)
 		{
 			if (this.finished == true)
 				return;
-			this.numStop = pitDec.NumStop;
-			this.pit.Add(new Pit(pitDec.LapsDone, pitDec.Flags, pitDec.Penalty, pitDec.NumStop, pitDec.rearL, pitDec.rearR, pitDec.frontL, pitDec.frontR, pitDec.Work));
+		this.numStop = pitDec.NumStops;
+		// Use the new Pit(IS_PIT) constructor from InSimDotNet
+		this.pit.Add(new Pit(pitDec));
 		}
 		public void updateTOC(string oldNickName, string oldUserName, string newNickName, string newUserName)
 		{
@@ -446,19 +438,19 @@ namespace LFSStatistics
 			this.toc.Add(new Toc(oldNickName, oldUserName, newNickName, newUserName, this.lap.Count + 1));
 
 		}
-		public void updatePSF(int PLID, long STime)
+		public void updatePSF(int PLID, TimeSpan STime)
 		{
 			if (this.finished == true)
 				return;
 			if (pit.Count > 0)
 			{
-				(pit[pit.Count - 1] as Pit).STime = STime;
-				this.cumuledStime += STime;
+				(pit[pit.Count - 1] as Pit).STime = STime.TotalMillisecondsLong();
+				this.cumuledStime += STime.TotalMillisecondsLong();
 			}
 
 		}
 		// TODO this seems very different from race result + it's used for setting lap which normally does UpdateLap, missing penalty stuff
-		public void UpdateQualResult(long TTime, long BTime, int NumStops, int Confirm, int LapsDone, int ResultNum, int NumRes, int maxSplit)
+		public void UpdateQualResult(long TTime, long BTime, int NumStops, ConfirmationFlags Confirm, int LapsDone, int ResultNum, int NumRes, int maxSplit)
 		{
 			//Console.WriteLine("TTime:" + TTime
 			//                    + " BTime:" + BTime
@@ -493,7 +485,7 @@ namespace LFSStatistics
 				this.BestSectorLap[maxSplit] = LapsDone;
 			}
 		}
-		public void UpdateResult(long totalTime, int resultNum, string CName, int confirm, int numStop)
+		public void UpdateResult(long totalTime, int resultNum, string CName, ConfirmationFlags confirm, int numStop)
 		{
 			this.totalTime = totalTime;
 			this.resultNum = resultNum;
@@ -501,24 +493,24 @@ namespace LFSStatistics
 			this.numStop = numStop;
 
 			this.penalty = "";
-			if ((confirm & (int)InSim.confirm.CONF_PENALTY_DT) != 0)
+			if ((confirm & ConfirmationFlags.CONF_PENALTY_DT) != 0)
 			{
 				this.resultNum = 998;
 				this.penalty += "DT";
 			}
-			if ((confirm & (int)InSim.confirm.CONF_PENALTY_SG) != 0)
+			if ((confirm & ConfirmationFlags.CONF_PENALTY_SG) != 0)
 			{
 				this.resultNum = 998;
 				this.penalty += "SG";
 			}
-			if ((confirm & (int)InSim.confirm.CONF_DID_NOT_PIT) != 0)
+			if ((confirm & ConfirmationFlags.CONF_DID_NOT_PIT) != 0)
 			{
 				this.resultNum = 998;
 				this.penalty += "DNP";
 			}
-			if ((confirm & (int)InSim.confirm.CONF_PENALTY_30) != 0)
+			if ((confirm & ConfirmationFlags.CONF_PENALTY_30) != 0)
 				this.penalty += "30s";
-			if ((confirm & (int)InSim.confirm.CONF_PENALTY_45) != 0)
+			if ((confirm & ConfirmationFlags.CONF_PENALTY_45) != 0)
 				this.penalty += "45s";
 		}
 
