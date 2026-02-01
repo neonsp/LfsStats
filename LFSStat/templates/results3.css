@@ -1,0 +1,95 @@
+body { 
+	background-color: white; 
+	margin: 10px;
+	padding: 0px;
+	border: 0px;
+}
+
+body, td {
+	font: normal 9pt verdana;
+	color: black;
+}
+
+img {
+	border: 0px;
+}
+
+a {
+	color: #222222;
+	text-decoration: underline;
+}
+
+a:hover {
+	color: #888866;
+	text-decoration: underline;
+}
+
+h1 {
+	margin: 5px;
+	font-size: 20px;
+	font-weight: bold;
+}
+
+table {
+	border-collapse: collapse;
+	empty-cells: show;
+	spacing: 0px;
+	padding: 0px;
+	border-width: 1px;
+}
+
+table.tab, table.tab td {
+	border: 1px solid #a7a3a0; 
+	margin: 5px;
+	spacing: 5px;
+}
+
+tr.row td {
+	background-color: white;
+	padding: 4px;
+	text-align: right;
+	font-size: 8pt;
+}
+
+tr.titl td, tr.titl2 td {
+	background-color: #e9e5e2;
+	padding: 5px;
+	text-align: center;
+	font-weight: bold;
+	font-size: 8pt;
+	color: #000000;
+}
+
+tr.titl2 td {
+	font-weight: normal;
+	padding: 4px;
+}
+
+td.vth {
+	background-color: #e9e5e2;
+	padding: 5px;
+	text-align: right;
+	font-size: 8pt;
+	color: #000000;
+}
+
+td.vtb, td.vtb2 {
+    background-color: white;
+	padding: 3px;
+	text-align: left;
+	font-size: 8pt;
+}
+
+td.vtb2 {
+	text-align: center;
+	font-weight: bold;
+	background: #c9c5c2;
+}
+
+td.titl {
+    background-color: white;
+}
+
+tr.titl {
+    background-color: white;
+}

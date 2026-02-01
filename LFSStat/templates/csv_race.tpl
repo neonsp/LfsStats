@@ -1,0 +1,1 @@
+[RaceResults {Position},{PlayerName},{UserName},{Car},{Gap},{BestLap},{LapsDone},{PitsDone},{Penalty},{PosGrid}]
