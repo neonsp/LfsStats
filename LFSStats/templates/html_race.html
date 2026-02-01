@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<HTML>
+  <HEAD>
+		<META charset="utf-8">
+		<!-- <TITLE>{lg_doctitle}</TITLE> -->
+		<TITLE>{RaceLength}&nbsp;{lg_of}&nbsp;{TrackName}</TITLE>
+		<LINK rel="stylesheet" type="text/css" href="css/normalize.css" />
+		<LINK rel="stylesheet" type="text/css" href="css/lfsStats.css" />
+		<!--[if lt IE 9]>
+			<SCRIPT src="js/html5shiv-printshiv.js"></SCRIPT>
+		<![endif]-->
+		<SCRIPT src="js/lfsStats.js"></SCRIPT>
+  </HEAD>
+  
+  <BODY>
+		<!-- Include header -->[-Include header.html]
+		<!-- Header -->
+		<HEADER>
+			<DIV id="headerTitle">
+				<H1><A href="{PROJECTURL}">{TITLELONG} {VERSIONVSHORT}</A><BR><!-- <SPAN>{lg_doctitle}</SPAN> -->
+				<SPAN>{SessionLength}&nbsp;{lg_of}&nbsp;{TrackName}</SPAN></H1>
+			</DIV>
+			
+			<SECTION>
+				<TABLE id="serverInfo">
+					<CAPTION><H2>{lg_serverinfo}</H2></CAPTION>
+					<TBODY>
+						<TR>
+							<TH>{lg_server}</TH>
+							<TD>{ServerName}</TD>
+							<TD rowspan="3">
+								<IMG title="{lg_trackImage}" alt="{lg_trackImage}" src="tracks/{TrackImg}" />
+							</TD>
+						</TR>
+						<TR>
+							<TH>{lg_track}</TH>
+							<TD>{TrackNameShort}<!-- add layout name --></TD>
+						</TR>
+						<TR>
+							<TH>{lg_conditions}</TH>
+							<TD>{TrackConditions}</TD>
+						</TR>
+					</TBODY>
+				</TABLE>
+			</SECTION>
+			
+			<!-- Main menu -->
+			<NAV id="mainMenu">
+				<H2>{lg_navigation}</H2>
+				<UL>
+					<LI><A href="#" onclick="Button1OnClick(this);" class="active">{lg_raceres}<BR>{lg_startord}</A></li>
+					<LI><A href="#" onclick="Button2OnClick(this);">{lg_bestlap}<BR>{lg_bestsplits}</A></li>
+					<LI><A href="#" onclick="Button3OnClick(this);">{lg_firstlap}<BR>{lg_topspeed}</A></li>
+					<LI><A href="#" onclick="Button4OnClick(this);">{lg_avglap}<BR>{lg_stability}</A></li>
+					<LI><A href="#" onclick="Button5OnClick(this);">{lg_racelead}<BR>{lg_highclimb}</A></li>
+					<LI><A href="#" onclick="Button6OnClick(this);">{lg_pitstop}<BR>{lg_relay}</A></li>
+					<LI><A href="#" onclick="Button7OnClick(this);">{lg_pen}<BR>{lg_flags}</A></li>
+					<li class="singleLine"><A href="#" onclick="Button8OnClick(this);">{lg_lbl}</A></li>
+					<li class="singleLine"><A href="#" onclick="Button9OnClick(this);">{lg_chat}</A></li>
+				</ul>
+					
+				<!-- <div align = center>
+					<A href="#rrs">{lg_raceres}</A>&nbsp;
+					<br>
+					<A href="#hcl">{lg_highclimb}</A>&nbsp;
+					<A href="#ral">{lg_racelead}</A>&nbsp;
+					<A href="#lal">{lg_laplead}</A>&nbsp;
+					<br>
+					<A href="#dev">{lg_stability}</A>&nbsp;
+					<A href="#avgl">{lg_avglap}</A>&nbsp;
+					<A href="#spu">{lg_firstlap}</A>&nbsp;
+					<br>
+					<A href="#spl">{lg_bestsplits}</A>&nbsp;
+					<br>
+					<A href="#bst">{lg_bestlap}</A>&nbsp;
+					<A href="#bpl">{lg_bestposlap}</A>&nbsp;
+					<A href="#top">{lg_topspeed}</A>&nbsp;
+					<br>
+					<A href="#pit">{lg_pitstop}</A>&nbsp;
+					<A href="#rel">{lg_relay}</A>&nbsp;
+					<br>
+					<A href="#yfl">{lg_yellowflagcaused}</A>&nbsp;
+					<A href="#bfl">{lg_blueflagshown}</A>&nbsp;
+					<A href="#pen">{lg_pens}</A>&nbsp;
+					<br>
+					<A href="#lbl">{lg_lblgraph}</A>&nbsp;
+					<A href="#rpr">{lg_rpgraph}</A>&nbsp;
+					<br>
+					<A href="{linklbl}">{lg_lbl}</A>&nbsp;
+					<A href="{linkchat}">{lg_chat}</A>&nbsp;XXX
+				</div>	 -->				
+			</NAV>
+		</HEADER>
+		
+		<MAIN>
+			<DIV id="page1">
+				<!-- Race result -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_raceres}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH colspan="2">{lg_racer}</TH>
+								<TH>{lg_plate}</TH>
+								<TH>{lg_car}</TH>
+								<TH>{lg_racetime}</TH>
+								<TH>{lg_bestlap}</TH>
+								<TH>{lg_wr}</TH>
+								<TH>{lg_laps}</TH>
+								<TH>{lg_pit}</TH>
+								<!-- <TH>{lg_flags}</TH> -->
+								<TH>{lg_steering}</TH>
+								<TH>{lg_brakehelp}</TH>
+								<TH>{lg_autogearshift}</TH>
+								<TH>{lg_manualshifter}</TH>
+								<TH>{lg_axisclutch}</TH>
+								<TH>{lg_autoclutch}</TH>
+								<TH>{lg_driverside}</TH>
+								<TH>{lg_customview}</TH>
+								<TH>{lg_penalty}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[RaceResult
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerNameColored">{PlayerNameColored}</TD>
+								<TD class="UserName"><A href="http://lfsworld.com/?win=stats&amp;racer={UserNameLink}">{UserName}</A></TD>
+								<TD class="Plate">{Plate}</TD>
+								<TD class="Car">{Car}</TD>
+								<TD class="Gap">{Gap}</TD>
+								<TD class="BestLap">{BestLap}</TD>
+								<TD class="DifferenceToWR">{DifferenceToWR}</TD>
+								<TD class="Lap">{LapsDone}</TD>
+								<TD class="Pit">{PitsDone}</TD>
+								<TD class="TextCheckBox"><span class="{Steering}"></span></TD>
+								<TD class="TextCheckBox"><span class="{BrakeHelp}"></span></TD>
+								<TD class="TextCheckBox"><span class="{AutoGearShift}"></span></TD>
+								<TD class="TextCheckBox"><span class="{ManualShifter}"></span></TD>
+								<TD class="TextCheckBox"><span class="{AxisClutch}"></span></TD>
+								<TD class="TextCheckBox"><span class="{AutoClutch}"></span></TD>
+								<TD class="TextCheckBox"><span class="{DriverSide}"></span></TD>
+								<TD class="TextCheckBox"><span class="{CustomView}"></span></TD>
+								<TD class="Penalty">{Penalty}</TD>
+							</TR>
+							]
+							<!-- single flag field -->
+							<!-- <TD class="Flags">{Flags}</TD> -->
+							<!-- textual flags -->
+							<!-- <TD class="TextCheckBox">{Steering}</TD>
+								<TD class="TextCheckBox">{BrakeHelp}</TD>
+								<TD class="TextCheckBox">{AutoGearShift}</TD>
+								<TD class="TextCheckBox">{ManualShifter}</TD>
+								<TD class="TextCheckBox">{AxisClutch}</TD>
+								<TD class="TextCheckBox">{AutoClutch}</TD>
+								<TD class="TextCheckBox">{DriverSide}</TD>
+							<TD class="TextCheckBox">{CustomView}</TD> -->
+						</TBODY>
+					</TABLE>
+				</SECTION>
+				<!-- Start order -->
+				<SECTION>
+					<TABLE class="data">
+					<CAPTION><H2>{lg_startord}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH>{lg_racer}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[StartOrder
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+				</SECTION>
+				<!-- Lap by lap graph -->
+				<SECTION>
+					<H2>{lg_lblgraph}</H2>
+					<FIGURE>
+						<IMG id="LapByLapGraph" title="{lg_lblgraph}" alt="{lg_lblgraph}" src="graph/{LapByLapGraphFileName}"/>
+					</FIGURE>
+				</SECTION>
+			</DIV>
+			
+			<DIV id="page2" class="displayNone">
+				<!-- Best sectors -->
+				<SECTION>
+					<H2>{lg_bestsectors}</H2>
+					[[BestSectorTable
+					<TABLE class="data">
+						<CAPTION>{lg_bestsector} {SectorNumber}</CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_time}</TH>
+								<TH>{lg_gap}</TH>
+								<TH>{lg_wr}</TH>
+								<TH>{lg_lap}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[SectorRow
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+								<TD class="SectorTime">{SectorTime}</TD>
+								<TD class="Difference">{Difference}</TD>
+								<TD class="DifferenceToWR">{DifferenceToWR}</TD>
+								<TD class="Lap">{Lap}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+					]]
+				</SECTION>
+				<!-- Best lap -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_bestlap}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_time}</TH>
+								<TH>{lg_gap}</TH>
+								<TH>{lg_wr}</TH>
+								<TH>{lg_lap}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[BestLap
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+								<TD class="LapTime">{LapTime}</TD>
+								<TD class="Difference">{Difference}</TD>
+								<TD class="DifferenceToWR">{DifferenceToWR}</TD>
+								<TD class="Lap">{Lap}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+				</SECTION>
+				<!-- Best possible lap -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_bestposlap}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_time}</TH>
+								<TH>{lg_gap}</TH>
+								<TH>{lg_bestlap}</TH>
+								<TH>{lg_wr}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[BestPossibleLap
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+								<TD class="LapTime">{LapTime}</TD>
+								<TD class="Difference">{Difference}</TD>
+								<TD class="DifferenceToBestLap">{DifferenceToBestLap}</TD>
+								<TD class="DifferenceToWR">{DifferenceToWR}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+					<P><SPAN class="header">{lg_combinedbestlap}:</SPAN> {CombinedBestLap}</P>
+				</SECTION>
+			</DIV>
+
+			
+			<DIV id="page3" class="displayNone">
+				<!-- First lap -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_firstlap}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_time}</TH>
+								<TH>{lg_gap}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[FirstLap
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+								<TD class="LapTime">{LapTime}</TD>
+								<TD class="Difference">{Difference}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+				</SECTION>
+				<!-- Top speed -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_topspeed}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_speed}</TH>
+								<TH>{lg_gap}</TH>
+								<TH>{lg_lap}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[TopSpeed
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+								<TD class="TopSpeed">{TopSpeed}</TD>
+								<TD class="Difference">{Difference}</TD>
+								<TD class="TopSpeedLap">{TopSpeedLap}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+				</SECTION>
+			</DIV>
+			
+			<DIV id="page4" class="displayNone">
+				<!-- Average lap -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_avglap}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_time}</TH>
+								<TH>{lg_gap}</TH>
+								<TH>{lg_laps}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[AverageLap
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+								<TD class="LapTime">{LapTime}</TD>
+								<TD class="Difference">{Difference}</TD>
+								<TD class="Laps">{Laps}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+				</SECTION>
+				<!-- Lap time stability -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_stability}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_dev}</TH>
+								<TH>{lg_gap}</TH>
+								<TH>{lg_laps}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[LapTimesStability
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+								<TD class="Deviation">{Deviation}</TD>
+								<TD class="Difference">{Difference}</TD>
+								<TD class="LapsDone">{LapsDone}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+				</SECTION>
+				<!-- Race progress graph -->
+				<SECTION>
+					<H2>{lg_rpgraph}</H2>
+					<IMG id="RaceProgressGraph" title="{lg_rpgraph}" alt="{lg_rpgraph}" src="graph/{RaceProgressGraphFileName}" />
+				</SECTION>
+			</DIV>
+			
+			<DIV id="page5" class="displayNone">
+				<!-- Race leader -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_racelead}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_number}</TH>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_laps}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[RaceLeader
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+								<TD class="LapsLead">{LapsLead}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+				</SECTION>
+				<!-- Laps led -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_laplead}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_laps}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[LapsLed
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+								<TD class="LapsLed">{LapsLed}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+				</SECTION>
+				<!-- Highest climber -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_highclimb}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_start}</TH>
+								<TH>{lg_finish}</TH>
+								<TH>{lg_gain}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[HighestClimber
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+								<TD class="StartPos">{StartPos}</TD>
+								<TD class="FinishPos">{FinishPos}</TD>
+								<TD class="Difference">{Difference}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+				</SECTION>
+			</DIV>
+			
+			<DIV id="page6" class="displayNone">
+				<!-- Pit stops -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_pitstop}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_ptinfo}</TH>
+								<TH>{lg_stoptime}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[PitStops
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+								<TD class="PitInfo">{PitInfo}</TD>
+								<TD class="PitTime">{PitTime}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+				</SECTION>
+				<!-- Relays -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_relay}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_relay}</TH>
+								<TH>{lg_laps}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[Relays
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+								<TD class="Relays">{Relays}</TD>
+								<TD class="Laps">{Laps}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+				</SECTION>
+			</DIV>
+			
+			<DIV id="page7" class="displayNone">
+				<!-- Penalties -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_pens}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_pen_info}</TH>
+								<TH>{lg_pens}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[Penalties
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+								<TD class="PenaltyInfo">{PenaltyInfo}</TD>
+								<TD class="PenaltyCount">{PenaltyCount}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+				</SECTION>
+				<!-- Blue flags -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_blueflagshown}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_flags}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[BlueFlagCausers
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+								<TD class="BlueFlagsCount">{BlueFlagsCount}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+				</SECTION>
+				<!-- Yellow flags -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_yellowflagcaused}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_position}</TH>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_flags}</TH>
+							</TR>
+						</THEAD>
+						<TBODY>
+							[YellowFlagCausers
+							<TR>
+								<TD class="Position">{Position}</TD>
+								<TD class="PlayerName">{PlayerName}</TD>
+								<TD class="YellowFlagsCount">{YellowFlagsCount}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+				</SECTION>
+			</DIV>
+			
+			<DIV id="page8" class="displayNone">
+				<!-- LBL Percent gradient -->
+				<TABLE class="data fullWidth">
+					<TBODY>
+						<TR>
+							[LBL_Percent
+							<TD class="LBL_Percent" style="background-color:hsla({LBL_CellBgHue},95%,{LBL_CellBgLight}%,0.70)">{LBL_Percent}%</TD>
+							]
+						</TR>
+					</TBODY>
+				</TABLE>
+						
+				<!-- LBL -->
+				<SECTION>		
+					<TABLE class="data">
+						<CAPTION><H2>{lg_lbl}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH></TH>
+								[LBL_HeadPos
+								<TH class="Position">{Position}</TH>
+								]
+							</TR>
+							<TR>
+								<TH>{lg_lap}</TH>
+								[LBL_HeadRacer
+								<TH class="PlayerName">{PlayerName}</TH>
+								]
+							</TR>
+						</THEAD>
+						<TBODY>
+							[[LBL_ResultsRow
+							<TR>
+								<TH class="Lap">{Lap}</TH>
+								[LBL_ResultCells
+								<TD class="LBL_Ltime" style="background-color:hsla({LBL_CellBgHue},95%,{LBL_CellBgLight}%,0.70)">{LBL_Ltime}</TD>
+								]
+							</TR>
+							]]
+							<TR>
+								<TH>{lg_total}</TH>
+								[LBL_Total
+								<TH class="LBL_Ttime">{Gap}<BR>{LBL_Ttime}<BR>{Penalty}</TH>
+								]
+							</TR>
+						</TBODY>
+					</TABLE>
+					<P><SPAN class="header">{lg_bestlap}:</SPAN>
+						[LBL_BestLap{LBL_bestLap} {PlayerName}</P>]
+				</SECTION>
+			</DIV>
+			
+			<DIV id="page9" class="displayNone">
+				<!-- Chat -->
+				<SECTION>
+					<TABLE class="data">
+						<CAPTION><H2>{lg_chat}</H2></CAPTION>
+						<THEAD>
+							<TR>
+								<TH>{lg_racer}</TH>
+								<TH>{lg_message}</TH>
+						</THEAD>
+						<TBODY>
+							[Chat
+							<TR>
+								<TD class="PlayerNameColored">{PlayerNameColored}</TD>
+								<TD class="MessageColored">{MessageColored}</TD>
+							</TR>
+							]
+						</TBODY>
+					</TABLE>
+				</SECTION>
+			</DIV>
+		</MAIN>
+		
+		<FOOTER>
+			<!-- Footer -->
+			<P><A href="{LICENSEURL}">{LICENSENAMESHORT}</A>, <A href="{PROJECTURL}">{TITLE} {VERSION}</A>, {COPYRIGHT}</P>
+		</FOOTER>
+		<!-- Include Footer -->[-Include footer.html]
+	</BODY>
+</HTML>

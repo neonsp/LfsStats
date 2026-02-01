@@ -2,18 +2,18 @@
 <!-- graph configuration file. 
 Notice:
 - file structure is not verified. If you intentionaly remove any opening or closing
-  tags, graph.exe will not work.
+	tags, graph.exe will not work.
 - in case of using non-english language in text strings, use UTF8 encoding only,
-  or graph.exe will not work.
+	or graph.exe will not work.
 -->
 <GraphConfiguration>
 	<TSVInputDirectory>./results/</TSVInputDirectory>
-    <GraphOutputDirectory>./results/graph/</GraphOutputDirectory>
+	<GraphOutputDirectory>./results/graph/</GraphOutputDirectory>
 
-    <GraphWidth>800</GraphWidth>
-    <GraphHeight>600</GraphHeight>
+	<GraphWidth>1024</GraphWidth>
+	<GraphHeight>600</GraphHeight>
 
-    <RaceProgressGraphMinValue>100</RaceProgressGraphMinValue>
+	<RaceProgressGraphMinValue>100</RaceProgressGraphMinValue>
 	<RaceProgressGraphTitle>Race time progress</RaceProgressGraphTitle>
 	<RaceProgressGraphXAxisLabel>Lap</RaceProgressGraphXAxisLabel>
 	<RaceProgressGraphYAxisLabel>Gap, seconds</RaceProgressGraphYAxisLabel>
@@ -23,7 +23,7 @@ Notice:
 	<LapByLapGraphYAxisLabel>Position</LapByLapGraphYAxisLabel>
 	<LapByLapGraphDisplayPositions>true</LapByLapGraphDisplayPositions>
 
-	<OutputLapTimes>true</OutputLapTimes>
+	<OutputLapTimes>false</OutputLapTimes>
 	<LimitLapTimes>true</LimitLapTimes>
 	<LimitMultiplier>1,5</LimitMultiplier>
 	<LimitToGlobalBestLap>true</LimitToGlobalBestLap>

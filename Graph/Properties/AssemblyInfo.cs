@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Graph")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("LFSStats graph generator")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("-[SC#7]-")]
+[assembly: AssemblyCompany("Jaroslav Černý")]
 [assembly: AssemblyProduct("Graph")]
-[assembly: AssemblyCopyright("Copyright © -[SC#7]- 2008")]
+[assembly: AssemblyCopyright("Copyright © 2008-2013 Jaroslav Černý")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.0.*")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("2.1.303.219")]
+[assembly: AssemblyFileVersion("2.1.0.0")]

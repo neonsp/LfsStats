@@ -1,3 +1,0 @@
-<FOOTER>
-	
-</FOOTER>

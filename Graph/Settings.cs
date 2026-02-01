@@ -53,7 +53,7 @@ namespace Graph
 		public static double LimitMultiplier = 2.0;
 		public static bool LimitToGlobalBestLap = true;
 
-		public static int graphWidth = 800;
+		public static int graphWidth = 960;
 		public static int graphHeight = 600;
 		public static int graphMinMax = 300;
 

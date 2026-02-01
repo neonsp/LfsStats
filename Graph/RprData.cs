@@ -1,20 +1,20 @@
 /*
-    LFSStat, Insim Replay statistics for Live For Speed Game
-    Copyright (C) 2008 Jaroslav Èerný alias JackCY, Robert B. alias Gai-Luron and Monkster.
-    Jack.SC7@gmail.com, lfsgailuron@free.fr
+	LFSStat, Insim Replay statistics for Live For Speed Game
+	Copyright (C) 2008 Jaroslav Èerný alias JackCY, Robert B. alias Gai-Luron and Monkster.
+	Jack.SC7@gmail.com, lfsgailuron@free.fr
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /*
  * Based on Graph v1.20 for LFS stats! (c) Alexander 'smith' Rudakov (piercemind@gmail.com)
@@ -179,12 +179,14 @@ namespace Graph
 
 			Legend lg = new Legend();
 			lg.Font = Settings.commonFont;
-			lg.BorderStyle = Settings.legendBorderType;
 			lg.XOffset = 60;
-
+			lg.BorderStyle = Settings.legendBorderType;
+			lg.BackgroundColor = Color.Transparent;
+			lg.TextColor = Color.Black;
+			lg.BorderColor = Color.Black;
 			this.plot.Legend = lg;
 
-			this.plot.PlotBackColor = Color.White;
+			this.plot.PlotBackColor = Color.Transparent;
 			this.plot.BackColor = Color.White;
 
 			this.plot.Add(new HorizontalLine(0.0, Color.Black));
