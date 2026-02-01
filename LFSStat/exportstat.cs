@@ -93,18 +93,18 @@ namespace LFSStat
         {
             int origLen = str.Length;
 
-            str = str.Replace("^0", "</font><font color = black>");
-            str = str.Replace("^1", "</font><font color = red>");
-            str = str.Replace("^2", "</font><font color = green>");
-            str = str.Replace("^3", "</font><font color = yellow>");
-            str = str.Replace("^4", "</font><font color = blue>");
-            str = str.Replace("^5", "</font><font color = pink>");
-            str = str.Replace("^6", "</font><font color = Turquoise>");
-            str = str.Replace("^7", "</font><font color = white>");
-            str = str.Replace("^8", "</font><font color = black>");
-            str = str.Replace("^9", "</font><font color = black>");
+            str = str.Replace("^0", "</span><span style=\"color: black;\">")
+					.Replace("^1", "</span><span style=\"color: red;\">")
+					.Replace("^2", "</span><span style=\"color: green;\">")
+					.Replace("^3", "</span><span style=\"color: yellow;\">")
+					.Replace("^4", "</span><span style=\"color: blue;\">")
+					.Replace("^5", "</span><span style=\"color: pink;\">")
+					.Replace("^6", "</span><span style=\"color: Turquoise;\">")
+					.Replace("^7", "</span><span style=\"color: white;\">")
+					.Replace("^8", "</span><span style=\"color: black;\">")
+					.Replace("^9", "</span><span style=\"color: black;\">");
             if (str.Length > origLen)
-                str = "<font>" + str + "</font>";
+                str = "<span>" + str + "</span>";
 
             str = str.Replace("^a", "*")
                                         .Replace("^c", ":")
@@ -142,7 +142,8 @@ namespace LFSStat
                     linecounter++;
                     readLine = sr.ReadLine();
                     if (readLine == null)
-                        goto endlang;
+                        //goto endlang;
+						break;
                     if (readLine.Trim() == "")
                         continue;
                     int index = readLine.IndexOf('='); //look for first "="
@@ -154,7 +155,7 @@ namespace LFSStat
                     lang[ key ] = val;
                 }
             }
-endlang:
+//endlang:
             strWind[0] = (string)lang["lg_wind0"];
             strWind[1] = (string)lang["lg_wind1"];
             strWind[2] = (string)lang["lg_wind2"];
@@ -294,7 +295,7 @@ endlang:
 
         public static void chatResult(System.Collections.Hashtable raceStat, string datFile, string raceDir, infoRace currInfoRace, string chatInX)
         {
-			// add InRace and InQual then deside!
+			// add InRace and InQual then decide!
 			System.IO.StreamWriter sw = new System.IO.StreamWriter(raceDir + "/" + datFile + "_chat_" + chatInX + ".html");
             System.IO.StreamReader sr = new System.IO.StreamReader("./templates/html_chat.tpl");
             string readLine;
@@ -446,11 +447,12 @@ endlang:
                     break;
 
                 #region RaceResults
+				// requires "[Tag" at the beginning of an output line, this single line is then processed
                 if (readLine.IndexOf("[RaceResults") == 0)
                 {
                     raceStats.modeSort = (int)sortRaceStats.SORT_RESULT;
-                    sorted.Sort();
-                    string wreadLine;
+					sorted.Sort();
+					string wreadLine;
                     curPos = 0;
                     for (int i = 0; i < sorted.Count; i++)
                     {
@@ -483,7 +485,7 @@ endlang:
                             wreadLine = wreadLine.Replace("{DifferenceToWR}", raceStats.LfstimeToString(p.bestLap - wi.WRTime));
 
 
-                        // if Racer do not finish
+                        // if Racer did not finish
                         if (p.resultNum == 999)
                             wreadLine = wreadLine.Replace("{Gap}", "DNF");
                         else
@@ -507,7 +509,8 @@ endlang:
                         wreadLine = wreadLine.Replace("{PitsDone}", p.numStop.ToString());
                         wreadLine = wreadLine.Replace("{Flags}", p.sFlags);
                         wreadLine = wreadLine.Replace("{Penalty}", p.penalty);
-                        sw.WriteLine(wreadLine);
+												
+                        sw.WriteLine(wreadLine);	// writes results into output as a single line
                     }
                     continue;
                 }
@@ -949,10 +952,10 @@ endlang:
                     blockSplit.Add(readLine);
                     while (true)
                     {
-                        readLine = sr.ReadLine();
+                        readLine = sr.ReadLine();	// end of file encountered
                         if (readLine == null)
                             break;
-                        if (readLine.IndexOf("]]") != -1)
+                        if (readLine.IndexOf("]]") > -1)	// end of block found
                         {
                             blockSplit.Add(readLine);
                             break;
@@ -1023,7 +1026,7 @@ endlang:
                                     wreadLine = readLine;
                                     if (p.curBestSplit == 0)
                                         continue;
-//                                    string lnickname = lfsStripColor(p.nickName);
+//                                  string lnickname = lfsStripColor(p.nickName);
                                     string lnickname = lfsStripColor(getAllNickName(p));
                                     string allUserName = getAllUserName(p);
 
@@ -1035,10 +1038,9 @@ endlang:
                                         baseTime = p.curBestSplit;
                                     wreadLine = wreadLine.Replace("{Position}", curPos.ToString());
 
-//                                    wreadLine = wreadLine.Replace("{PlayerName}", lnickname);
-//                                    wreadLine = wreadLine.Replace("{UserName}", p.userName);
                                     wreadLine = wreadLine.Replace("{PlayerName}", lnickname);
                                     wreadLine = wreadLine.Replace("{UserName}", allUserName);
+//                                  wreadLine = wreadLine.Replace("{UserName}", p.userName);
 
                                     wreadLine = wreadLine.Replace("{SplitTime}", raceStats.LfstimeToString(p.curBestSplit));
                                     wreadLine = wreadLine.Replace("{Difference}", raceStats.LfstimeToString(p.curBestSplit - baseTime));
@@ -2164,15 +2166,19 @@ endlang:
             readLine = readLine.Replace("{TrackImg}", currInfoRace.currentTrackName.ToLower() + ".gif" );
             if( currInfoRace.raceLaps == 0 )
                 readLine = readLine.Replace("{RaceLength}", currInfoRace.sraceLaps);
+            else if( currInfoRace.raceLaps == 1 )
+                readLine = readLine.Replace("{RaceLength}", currInfoRace.sraceLaps + " " + lang["lg_durationLap"]);
             else if( currInfoRace.raceLaps < 191 )
-                readLine = readLine.Replace("{RaceLength}", currInfoRace.sraceLaps + " " + lang["lg_laps"]);
+                readLine = readLine.Replace("{RaceLength}", currInfoRace.sraceLaps + " " + lang["lg_durationLaps"]);
+            else if( currInfoRace.raceLaps == 191 )
+                readLine = readLine.Replace("{RaceLength}", currInfoRace.sraceLaps + " " + lang["lg_durationHour"]);
             else
-                readLine = readLine.Replace("{RaceLength}", currInfoRace.sraceLaps + "H");
+                readLine = readLine.Replace("{RaceLength}", currInfoRace.sraceLaps + " " + lang["lg_durationHours"]);
 
 
             readLine = readLine.Replace("{QualLength}", currInfoRace.qualMins.ToString() );
-            readLine = readLine.Replace("{RaceConditions}", strWeather[currInfoRace.weather] + "," + strWind[currInfoRace.wind]);
-            readLine = readLine.Replace("{QualConditions}", strWeather[currInfoRace.weather] + "," + strWind[currInfoRace.wind]);
+            readLine = readLine.Replace("{RaceConditions}", strWeather[currInfoRace.weather] + ", " + strWind[currInfoRace.wind]);
+            readLine = readLine.Replace("{QualConditions}", strWeather[currInfoRace.weather] + ", " + strWind[currInfoRace.wind]);
             readLine = readLine.Replace("{LapByLapGraphFileName}", datFile + "_lbl.png");
             readLine = readLine.Replace("{linklbl}", datFile + "_lbl_race.html");
 			readLine = readLine.Replace("{linkchat}", datFile + "_chat_" + chatInX + ".html");

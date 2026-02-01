@@ -156,11 +156,11 @@ namespace LFSStat
         System.Collections.ArrayList longCarNames = new System.Collections.ArrayList();
         bool debugmode = false;
 
-		string exportOnSTAte = "";
-		string exportOnRaceSTart = "";
-		bool askForFileNameOnRST = false;
-		bool askForFileNameOnSTA = false;
-		bool generateGraphs = true;
+		string exportOnSTAte = "yes";		// yes, no
+		string exportOnRaceSTart = "yes";	// yes, no
+		string generateGraphs = "dll";		// dll, exe, no
+		bool askForFileNameOnRST = false;	// true, false
+		bool askForFileNameOnSTA = false;	// true, false
 
         #endregion
         
@@ -287,6 +287,11 @@ namespace LFSStat
             }
         }
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="LFSClient"/> class.
+		/// </summary>
+		/// <param name="scriptfilename">The scriptfilename.</param>
+		/// <param name="debugmode">if set to <c>true</c> [debugmode].</param>
         public LFSClient(string scriptfilename, bool debugmode)
         {
 
@@ -305,7 +310,7 @@ namespace LFSStat
             shortCarNames.Add("FXO"); longCarNames.Add("FXO TURBO");
             shortCarNames.Add("LX4"); longCarNames.Add("LX4");
             shortCarNames.Add("LX6"); longCarNames.Add("LX6");
-            shortCarNames.Add("RAC"); longCarNames.Add("RA");
+            shortCarNames.Add("RAC"); longCarNames.Add("RACEABOUT");
             shortCarNames.Add("FZ5"); longCarNames.Add("FZ50");
             shortCarNames.Add("MRT"); longCarNames.Add("MRT5");
             shortCarNames.Add("XFR"); longCarNames.Add("XF GTR");
@@ -315,8 +320,9 @@ namespace LFSStat
             shortCarNames.Add("FXR"); longCarNames.Add("FXO GTR");
             shortCarNames.Add("XRR"); longCarNames.Add("XR GTR");
             shortCarNames.Add("FZR"); longCarNames.Add("FZ50 GTR");
-            shortCarNames.Add("BF1"); longCarNames.Add("BMW SAUBER");
-            shortCarNames.Add("FBM"); longCarNames.Add("BMW FB02");
+            shortCarNames.Add("BF1"); longCarNames.Add("BMW SAUBER F1.06");
+			shortCarNames.Add("FBM"); longCarNames.Add("FORMULA BMW FB02");
+			shortCarNames.Add("VWS"); longCarNames.Add("VW SCIROCCO");
             #endregion
 
             #region Configuring LFSStat
@@ -374,35 +380,47 @@ namespace LFSStat
 			try { askForFileNameOnSTA = bool.Parse(cfg.Get("askForFileNameOnSTA")); }
 			catch (Exception) { }
 
-			try { generateGraphs = bool.Parse(cfg.Get("generateGraphs")); }
-			catch (Exception) { }
+			// Export graphs?
+			generateGraphs = cfg.Get("generateGraphs");
+			//switch (generateGraphs)
+			//{
+			//    case "dll":
+			//    case "exe":
+			//    case "no":
+			//        break;
+
+			//    default:
+			//        exportOnRaceSTart = "dll";
+			//        break;
+			//}
 
 			// Export Statistics when STAte changed?
 			exportOnSTAte = cfg.Get("exportOnSTAte");
-			switch (exportOnSTAte)
-			{
-				case "yes":
-				case "no":
-				case "ask":
-					break;
+			//switch (exportOnSTAte)
+			//{
+			//    case "yes":
+			//    case "no":
+			//    case "ask":
+			//        break;
 
-				default:
-					exportOnSTAte = "yes";
-					break;
-			}
+			//    default:
+			//        exportOnSTAte = "yes";
+			//        break;
+			//}
+
 			// Export Statistics when Race STart?
 			exportOnRaceSTart = cfg.Get("exportOnRaceSTart");
-			switch (exportOnRaceSTart)
-			{
-				case "yes":
-				case "no":
-				case "ask":
-					break;
+			//switch (exportOnRaceSTart)
+			//{
+			//    case "yes":
+			//    case "no":
+			//    case "ask":
+			//        break;
 
-				default:
-					exportOnRaceSTart = "yes";
-					break;
-			}
+			//    default:
+			//        exportOnRaceSTart = "yes";
+			//        break;
+			//}
 
             #endregion
 
@@ -719,14 +737,14 @@ namespace LFSStat
                                 (raceStat[newPlayer.PLID] as raceStats).finPLID = newPlayer.PLID;
 
                             string addInfo = "";
-                            for (int i = 1; i < 13; i++)
+                            for (int i = 0; i < 14; i++)
                             {
-                                if (((uint)(newPlayer.Flags) & (uint)(2 << i)) != 0)
-                                    addInfo += ((InSim.Decoder.NPL.PlayerFlags)(2 << i)).ToString() + " ";
+                                if (((uint)(newPlayer.Flags) & (uint)(1 << i)) != 0)
+                                    addInfo += ((InSim.Decoder.NPL.PlayerFlags)(1 << i)).ToString() + " ";
                             }
                             (raceStat[newPlayer.PLID] as raceStats).sFlags = addInfo;
                             break;
-
+							
                         case "PLP":
                             if(debugmode)Console.WriteLine("PLayer Pits (go to settings - stays in player list)");
 
@@ -1013,7 +1031,7 @@ namespace LFSStat
                                 Ver(msg.PLID);
                             if (msg.UserType == 1)
                             {
-								string schat = exportstats.lfsColorToHtml(NickNameByUCID(msg.UCID)) + ":" + exportstats.lfsChatTextToHtml(msg.message);
+								string schat = exportstats.lfsColorToHtml(NickNameByUCID(msg.UCID)) + ":" + exportstats.lfsColorToHtml(exportstats.lfsChatTextToHtml(msg.message));
                                 currInfoRace.chat.Add(schat);
                             }
                             break;
@@ -1167,10 +1185,19 @@ namespace LFSStat
 			Console.WriteLine("> Race Stats exported <");
 
 			// Call graph generator
-			if (generateGraphs)
+			switch (generateGraphs)
 			{
-				Graph.Graph.GenerateGraph();
-				Console.WriteLine("> Graphs generated <");
+				case "dll":
+					Graph.Graph.GenerateGraph();
+					Console.WriteLine("> Graph.dll graphs generated <");
+					break;
+				case "exe":
+					Process p = Process.Start("Graph.exe");
+					Console.WriteLine("> Graph.exe graphs generated <");
+					break;
+
+				default:
+					break;
 			}
 		}
     }

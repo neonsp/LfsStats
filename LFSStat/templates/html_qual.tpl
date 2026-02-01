@@ -5,7 +5,7 @@
 <title>{lg_qualDocTitle}</title>
 </head>
 <body>
-<body style="background-image: url(image/background.jpg);">
+<body>
 [include .\include\header_qual.tpl]
 <table width="100%"><tr><td align="left"><h1>{lg_qualDocTitle}</h1></td><td align="right"><div style="font-size: 7pt;"><a href="http://www.lfsforum.net/showthread.php?t=24933">{VERSIONSHORT}</a></div></td></tr><table>
 

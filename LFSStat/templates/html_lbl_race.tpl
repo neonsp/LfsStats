@@ -5,7 +5,7 @@
 <title>{lg_reslbl}</title>
 </head>
 <body>
-<body style="background-image: url(image/background.jpg);">
+<body>
 [include .\include\header_lbl_race.tpl]
 <table width="100%">
   <tbody>
