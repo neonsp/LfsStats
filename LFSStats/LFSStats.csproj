@@ -84,6 +84,9 @@
     <Reference Include="InSimDotNet, Version=2.4.6.1, Culture=neutral, PublicKeyToken=1943e54a82f60fb6, processorArchitecture=MSIL">
       <HintPath>..\packages\InSimDotNet.2.4.6.1\lib\net48\InSimDotNet.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />

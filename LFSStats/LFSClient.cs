@@ -176,7 +176,6 @@ namespace LFSStatistics
             insimConnection.Bind<IS_TOC>(OnTOC);
             insimConnection.Bind<IS_SMALL>(OnSmall);
 
-
             var flags = InSimFlags.ISF_MCI | InSimFlags.ISF_NLP;
 			if (config.IsLocal)
 			{
@@ -200,10 +199,18 @@ namespace LFSStatistics
 				insimSettings.UdpPort = config.IpEndPoint.Port;
             }
 
-			insimConnection.Initialize(insimSettings);
+            try
+            {
+                insimConnection.Initialize(insimSettings);
 
-            LoopAsync(insimConnection);
-		}
+                LoopAsync(insimConnection);
+            }
+			catch (Exception ex)
+            {
+                LFSStats.WriteLine("Failed to initialize InSim: " + ex.Message);
+                LFSStats.Exit(1);
+            }
+        }
 
         private void OnPlayerPits(InSimDotNet.InSim insim, IS_PLP packet)
         {

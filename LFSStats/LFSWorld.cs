@@ -16,20 +16,12 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+using Newtonsoft.Json;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Reflection;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using DotNetExtensions;
-
 
 namespace LFSStatistics
 {
@@ -38,14 +30,13 @@ namespace LFSStatistics
 	/// </summary>
 	static class LFSWorld
 	{
-		private const int lfswTxtWRColumnCount = 10;	// 10 columns: <id_wr> <Track> <car> <split1> <split2> <split3> <laptime> <flags_hlaps> <racername> <timestamp>
 		private const int lfswRequestPeriod = 5000;		// 5 seconds
 		private const int lfswNumberOfWRs = 940;		// number of WRs, used for dictionary initial capacity
-		private const string lfswScriptUrl = @"http://www.lfsworld.net/pubstat/get_stat2.php?idk=";	// no version specified, will use latest version by default
+		private const string lfswScriptUrl = @"https://www.lfsworld.net/pubstat/get_stat2.php?ps=0&version=1.5&idk=";	// no premium usage, version 1.5 specified
 		private const string lfswRequestWR = @"&action=wr";	// WR
-		private const string lfswScriptFormatXML = @"&s=3";	// XML
+		private const string lfswScriptFormatXML = @"&s=1"; // JSON format
 
-		private static Dictionary<string, TrackInfo> TrackTable { get; set; }
+        private static Dictionary<string, TrackInfo> TrackTable { get; set; }
 		private static Dictionary<string, WR> dictWR;
 		private static bool initialized;
 
@@ -56,27 +47,30 @@ namespace LFSStatistics
 			initialized = false;
 		}
 
-		private class TrackInfo// : System.IComparable
+		private class TrackInfo : IComparable
 		{
 			internal string Track { get; private set; }
 			internal Dictionary<string, WR> CarTable { get; private set; }
 
 			internal TrackInfo(string track)
 			{
-				this.Track = track;
-				this.CarTable = new Dictionary<string, WR>();
+				Track = track;
+				CarTable = new Dictionary<string, WR>();
 			}
 
-			//public int CompareTo(object x)
-			//{
-			//    if (string.Compare((x as TrackInfo).track, this.track) < 0)
-			//        return 1;
-			//    else if (string.Compare((x as TrackInfo).track, this.track) > 0)
-			//        return -1;
-			//    else
-			//        return 0;
-			//}
-		}
+            public int CompareTo(object obj)
+            {
+                if (obj == null) return 1;
+                if (obj is TrackInfo other)
+                {
+                    return string.Compare(Track, other.Track, StringComparison.OrdinalIgnoreCase);
+                }
+                else
+                {
+                    throw new ArgumentException("Object is not a TrackInfo");
+                }
+            }
+        }
 
 		internal class WR
 		{
@@ -102,17 +96,17 @@ namespace LFSStatistics
 
 		internal class WRi
 		{
-			public int id_wr { get; private set; }
-			public int track { get; private set; }
-			public string car { get; private set; }
-			public long split1 { get; private set; }
-			public long split2 { get; private set; }
-			public long split3 { get; private set; }
-			public long laptime { get; private set; }
-			public int flags_hlaps { get; private set; }
-			public string racername { get; private set; }
-			public long timestamp { get; private set; }
-		}
+            public int id_wr { get; set; }
+            public string track { get; set; }
+            public string car { get; set; }
+            public long split1 { get; set; }
+            public long split2 { get; set; }
+            public long split3 { get; set; }
+            public long laptime { get; set; }
+            public int flags_hlaps { get; set; }
+            public string racername { get; set; }
+            public long timestamp { get; set; }
+        }
 
 		/// <summary>
 		/// Gets the WR for given track and car combination.
@@ -126,11 +120,6 @@ namespace LFSStatistics
 			try { return TrackTable[track].CarTable[carName]; }
 			catch (KeyNotFoundException) { return null; }
 		}
-
-        //private enum PubStatWR
-        //{
-        //    id_wr, track, car, split1, split2, split3, laptime, flags_hlaps, racername, timestamp
-        //}
 
         internal static bool Initialize(string pubStatIDkey)
         {
@@ -156,12 +145,77 @@ namespace LFSStatistics
                 {
                     using (WebResponse webResponse = WebRequest.Create(url).GetResponse())
                     using (Stream responseStream = webResponse.GetResponseStream())
+                    using (StreamReader reader = new StreamReader(responseStream))
                     {
                         if (responseStream == null)
                             throw new InvalidOperationException("Response stream is null.");
 
-                        // Aquí iría el parsing real (actualmente comentado)
+                        string json = reader.ReadToEnd();
+
+                        List<WRi> wrList = DeserializeWRiList(json);
+
+                        TrackTable = new Dictionary<string, TrackInfo>();
+
+                        foreach (WRi wri in wrList)
+                        {
+                            string trackCode = wri.track;
+                            string trackName = ConvertLFSWTrackCode(trackCode);
+
+                            if (!TrackTable.TryGetValue(trackName, out TrackInfo trackInfo))
+                            {
+                                trackInfo = new TrackInfo(trackName);
+                                TrackTable.Add(trackName, trackInfo);
+                            }
+
+                            const int maxSplits = 3;
+                            var splits = new long[maxSplits] { wri.split1, wri.split2, wri.split3 };
+                            long[] sectors = new long[maxSplits+1];
+
+                            long previous = 0;
+                            int lastValidSplitIndex = -1;
+
+                            for (int i = 0; i < maxSplits; i++)
+                            {
+                                if (splits[i] > 0)
+                                {
+                                    sectors[i] = splits[i] - previous;
+                                    previous = splits[i];
+                                    lastValidSplitIndex = i;
+                                }
+                                else
+                                {
+                                    sectors[i] = 0;
+                                }
+                            }
+                            // Last sector
+                            if (lastValidSplitIndex >= 0 && wri.laptime > previous)
+                            {
+                                sectors[lastValidSplitIndex + 1] = wri.laptime - previous;
+                            }
+
+                            PlayerFlags flags = (PlayerFlags)wri.flags_hlaps;
+
+                            WR wr = new WR(
+                                trackName,
+                                wri.car,
+                                wri.laptime,
+                                splits,
+                                sectors,
+                                wri.racername,
+                                flags
+                            );
+
+                            if (string.IsNullOrWhiteSpace(wri.car))
+                            {
+                                LFSStats.WriteLine($"WR ignored: invalid track (track={wri.track}, id_wr={wri.id_wr})");
+                                continue;
+                            }
+
+                            trackInfo.CarTable[wri.car] = wr;
+                        }
+
                         initialized = true;
+						LFSStats.WriteLine(" done.");
                         return initialized;
                     }
                 }
@@ -186,6 +240,11 @@ namespace LFSStatistics
             }
 
             return initialized;
+        }
+
+        private static List<WRi> DeserializeWRiList(string json)
+        {
+            return JsonConvert.DeserializeObject<List<WRi>>(json);
         }
 
         private static string ConvertLFSWTrackCode(string trackCode)
@@ -213,6 +272,12 @@ namespace LFSStatistics
 					break;
 				case '6':
 					retValue = "AS";
+					break;
+				case '7':
+					retValue = "RO";
+					break;
+				case '8':
+					retValue = "LA";
 					break;
 			}
 			retValue += (int.Parse(trackCode[1].ToString()) + 1).ToString();
