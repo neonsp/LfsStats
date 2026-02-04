@@ -176,6 +176,12 @@ namespace LFSStatistics
             insimConnection.Bind<IS_TOC>(OnTOC);
             insimConnection.Bind<IS_SMALL>(OnSmall);
 
+            insimConnection.Disconnected += (sender, e) =>
+            {
+                LFSStats.WriteLine("Disconnected from InSim: " + e.Reason);
+                LFSStats.Exit(1);
+            };
+
             var flags = InSimFlags.ISF_MCI | InSimFlags.ISF_NLP;
 			if (config.IsLocal)
 			{
@@ -202,6 +208,10 @@ namespace LFSStatistics
             try
             {
                 insimConnection.Initialize(insimSettings);
+                if (!insimConnection.IsConnected)
+                {
+                    throw new Exception("Could not connect to InSim. Check connection details.");
+                }
 
                 LoopAsync(insimConnection);
             }
