@@ -80,9 +80,9 @@ namespace LFSStatistics
 			public long[] Split { get; private set; }
 			public long[] Sector { get; private set; }
 			public string RacerName { get; private set; }
-			public PlayerFlags Flags { get; private set; }
+			public InSimDotNet.Packets.PlayerFlags Flags { get; private set; }
 
-			internal WR(string track, string carName, long wrTime, long[] split, long[] sector, string racerName, PlayerFlags flags)
+			internal WR(string track, string carName, long wrTime, long[] split, long[] sector, string racerName, InSimDotNet.Packets.PlayerFlags flags)
 			{
 				Track = track;
 				CarName = carName;
@@ -139,84 +139,59 @@ namespace LFSStatistics
 
             string url = lfswScriptUrl + pubStatIDkey + lfswRequestWR + lfswScriptFormatXML;
 
-            while (requestNumber < maxRequests)
+            // ---- CACHE SETUP ----
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string cacheDir = Path.Combine(basePath, "cache");
+            string cacheFile = Path.Combine(cacheDir, "lfsworld_wr.json");
+            TimeSpan cacheMaxAge = TimeSpan.FromDays(1);
+
+            Directory.CreateDirectory(cacheDir);
+
+            string json = null;
+
+            // ---- TRY CACHE FIRST ----
+            if (File.Exists(cacheFile))
+            {
+                DateTime lastWrite = File.GetLastWriteTimeUtc(cacheFile);
+                if (DateTime.UtcNow - lastWrite < cacheMaxAge)
+                {
+                    try
+                    {
+                        json = File.ReadAllText(cacheFile);
+                        LFSStats.Write(" using cache");
+                    }
+                    catch (IOException)
+                    {
+                        json = null;
+                    }
+                }
+            }
+
+            // ---- DOWNLOAD IF NO VALID CACHE ----
+            while (json == null && requestNumber < maxRequests)
             {
                 try
                 {
                     using (WebResponse webResponse = WebRequest.Create(url).GetResponse())
                     using (Stream responseStream = webResponse.GetResponseStream())
-                    using (StreamReader reader = new StreamReader(responseStream))
                     {
                         if (responseStream == null)
                             throw new InvalidOperationException("Response stream is null.");
 
-                        string json = reader.ReadToEnd();
-
-                        List<WRi> wrList = DeserializeWRiList(json);
-
-                        TrackTable = new Dictionary<string, TrackInfo>();
-
-                        foreach (WRi wri in wrList)
+                        using (StreamReader reader = new StreamReader(responseStream))
                         {
-                            string trackCode = wri.track;
-                            string trackName = ConvertLFSWTrackCode(trackCode);
-
-                            if (!TrackTable.TryGetValue(trackName, out TrackInfo trackInfo))
-                            {
-                                trackInfo = new TrackInfo(trackName);
-                                TrackTable.Add(trackName, trackInfo);
-                            }
-
-                            const int maxSplits = 3;
-                            var splits = new long[maxSplits] { wri.split1, wri.split2, wri.split3 };
-                            long[] sectors = new long[maxSplits+1];
-
-                            long previous = 0;
-                            int lastValidSplitIndex = -1;
-
-                            for (int i = 0; i < maxSplits; i++)
-                            {
-                                if (splits[i] > 0)
-                                {
-                                    sectors[i] = splits[i] - previous;
-                                    previous = splits[i];
-                                    lastValidSplitIndex = i;
-                                }
-                                else
-                                {
-                                    sectors[i] = 0;
-                                }
-                            }
-                            // Last sector
-                            if (lastValidSplitIndex >= 0 && wri.laptime > previous)
-                            {
-                                sectors[lastValidSplitIndex + 1] = wri.laptime - previous;
-                            }
-
-                            PlayerFlags flags = (PlayerFlags)wri.flags_hlaps;
-
-                            WR wr = new WR(
-                                trackName,
-                                wri.car,
-                                wri.laptime,
-                                splits,
-                                sectors,
-                                wri.racername,
-                                flags
-                            );
-
-                            if (string.IsNullOrWhiteSpace(wri.car))
-                            {
-                                LFSStats.WriteLine($"WR ignored: invalid track (track={wri.track}, id_wr={wri.id_wr})");
-                                continue;
-                            }
-
-                            trackInfo.CarTable[wri.car] = wr;
+                            json = reader.ReadToEnd();
                         }
 
-                        initialized = true;
-						LFSStats.WriteLine(" done.");
-                        return initialized;
+                        // Save to cache (best-effort)
+                        try
+                        {
+                            File.WriteAllText(cacheFile, json);
+                        }
+                        catch (IOException)
+                        {
+                            // cache failure is non-fatal
+                        }
                     }
                 }
                 catch (WebException ex)
@@ -239,6 +214,74 @@ namespace LFSStatistics
                 }
             }
 
+            if (json == null)
+                return initialized;
+
+            // ---- EXISTING PARSING LOGIC ----
+
+            List<WRi> wrList = DeserializeWRiList(json);
+            TrackTable = new Dictionary<string, TrackInfo>();
+
+            foreach (WRi wri in wrList)
+            {
+                string trackCode = wri.track;
+                string trackName = ConvertLFSWTrackCode(trackCode);
+
+                if (!TrackTable.TryGetValue(trackName, out TrackInfo trackInfo))
+                {
+                    trackInfo = new TrackInfo(trackName);
+                    TrackTable.Add(trackName, trackInfo);
+                }
+
+                const int maxSplits = 3;
+                var splits = new long[maxSplits] { wri.split1, wri.split2, wri.split3 };
+                long[] sectors = new long[maxSplits + 1];
+
+                long previous = 0;
+                int lastValidSplitIndex = -1;
+
+                for (int i = 0; i < maxSplits; i++)
+                {
+                    if (splits[i] > 0)
+                    {
+                        sectors[i] = splits[i] - previous;
+                        previous = splits[i];
+                        lastValidSplitIndex = i;
+                    }
+                    else
+                    {
+                        sectors[i] = 0;
+                    }
+                }
+
+                if (lastValidSplitIndex >= 0 && wri.laptime > previous)
+                {
+                    sectors[lastValidSplitIndex + 1] = wri.laptime - previous;
+                }
+
+                var flags = (InSimDotNet.Packets.PlayerFlags)wri.flags_hlaps;
+
+                if (string.IsNullOrWhiteSpace(wri.car))
+                {
+                    LFSStats.WriteLine($"WR ignored: invalid track (track={wri.track}, id_wr={wri.id_wr})");
+                    continue;
+                }
+
+                WR wr = new WR(
+                    trackName,
+                    wri.car,
+                    wri.laptime,
+                    splits,
+                    sectors,
+                    wri.racername,
+                    flags
+                );
+
+                trackInfo.CarTable[wri.car] = wr;
+            }
+
+            initialized = true;
+            LFSStats.WriteLine(" done.");
             return initialized;
         }
 
