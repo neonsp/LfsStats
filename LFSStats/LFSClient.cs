@@ -708,7 +708,7 @@ namespace LFSStatistics
             raceStat[newPlayer.PLID].allUN[nplUserName] = new UN(nplUserName, newPlayer.PName);
             raceStat[newPlayer.PLID].carName = newPlayer.CName;
             raceStat[newPlayer.PLID].Plate = newPlayer.Plate;
-            raceStat[newPlayer.PLID].Flags = newPlayer.Flags;
+            raceStat[newPlayer.PLID].flags = newPlayer.Flags;
             if (sessionInfo.InQualification())
                 raceStat[newPlayer.PLID].finPLID = newPlayer.PLID;
         }

@@ -157,19 +157,9 @@ namespace LFSStatistics
 		public int numPen = 0;
 		public bool inBlue;
 
-		private PlayerFlags flags;
-		public InSimDotNet.Packets.PlayerFlags Flags
-		{
-			get;
-			set;
-		}
-        public string sFlags
-        {
-            get
-            {
-                return Flags != 0 ? Flags.ToString().Replace(",", string.Empty) : string.Empty;
-            }
-        }
+		public PlayerFlags flags { get; set; }
+        public string sFlags => GetAllPlayerFlags();
+
         public List<Lap> lap = new List<Lap>();
 		public List<Pit> pit = new List<Pit>();
 		public List<Penalty> pen = new List<Penalty>();
@@ -257,64 +247,82 @@ namespace LFSStatistics
 
 		public string GetPlayerFlagSteering()
 		{
-			if (flags.HasFlag(PlayerFlags.Mouse))
+			if (flags.HasFlag(PlayerFlags.PIF_MOUSE))
 				return "Mouse";
-			if (flags.HasFlag(PlayerFlags.KbNoHelp))
+			if (flags.HasFlag(PlayerFlags.PIF_KB_NO_HELP))
 				return "Keyboard";
-			if (flags.HasFlag(PlayerFlags.KbStabilised))
+			if (flags.HasFlag(PlayerFlags.PIF_KB_STABILISED))
 				return "KeyboardStabilised";
 			else
 				return "Wheel";
 		}
 		public string GetPlayerFlagBrakeHelp()
 		{
-			if (flags.HasFlag(PlayerFlags.BrakeHelp))
+			if (flags.HasFlag(PlayerFlags.PIF_HELP_B))
 				return "BrakeHelp";
 			else
 				return "";
 		}
 		public string GetPlayerFlagAutoGearShift()
 		{
-			if (flags.HasFlag(PlayerFlags.AutoGearShift))
+			if (flags.HasFlag(PlayerFlags.PIF_AUTOGEARS))
 				return "AutoGearShift";
 			else
 				return "";
 		}
 		public string GetPlayerFlagManualShifter()
 		{
-			if (flags.HasFlag(PlayerFlags.Shifter))
+			if (flags.HasFlag(PlayerFlags.PIF_SHIFTER))
 				return "Shifter";
 			else
 				return "";
 		}
 		public string GetPlayerFlagAxisClutch()
 		{
-			if (flags.HasFlag(PlayerFlags.AxisClutch))
+			if (flags.HasFlag(PlayerFlags.PIF_AXIS_CLUTCH))
 				return "AxisClutch";
 			else
 				return "";
 		}
 		public string GetPlayerFlagAutoClutch()
 		{
-			if (flags.HasFlag(PlayerFlags.AutoClutch))
+			if (flags.HasFlag(PlayerFlags.PIF_AUTOCLUTCH))
 				return "AutoClutch";
 			else
 				return "";
 		}
 		public string GetPlayerFlagDriverSide()
 		{
-			if (flags.HasFlag(PlayerFlags.SwapSide))	// Left side steering
-				return "LeftHandDrive";
+            //TODO: Include mods check
+            var singleSeaters = new HashSet<string> { "FBM", "FOX", "FO8", "BF1", "MRT" }; 
+            if (!singleSeaters.Contains(carName) && flags.HasFlag(PlayerFlags.PIF_SWAPSIDE))
+				return "SwapSide";
 			else
-				return "RightHandDrive";
+				return "";
 		}
 		public string GetPlayerFlagCustomView()
 		{
-			if (flags.HasFlag(PlayerFlags.CustomView))
+			if (flags.HasFlag(PlayerFlags.PIF_CUSTOM_VIEW))
 				return "CustomView";
 			else
 				return "";
 		}
+
+		public string GetAllPlayerFlags()
+		{
+			var results = new List<string>
+            {
+                GetPlayerFlagSteering(),
+                GetPlayerFlagBrakeHelp(),
+                GetPlayerFlagAutoGearShift(),
+                GetPlayerFlagManualShifter(),
+                GetPlayerFlagAxisClutch(),
+                GetPlayerFlagAutoClutch(),
+                GetPlayerFlagDriverSide(),
+                GetPlayerFlagCustomView()
+            };
+            return string.Join(" ", results.Where(flag => !string.IsNullOrWhiteSpace(flag)));
+        }
 
 		public static string LfsTimeToString(long val)
 		{

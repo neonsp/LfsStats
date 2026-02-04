@@ -319,25 +319,6 @@ namespace LFSStatistics
 		Program, Session, Lap, Split, Info
 	}
 
-	[Flags]
-	public enum PlayerFlags : int
-	{
-		SwapSide = 1,
-		Reserved_2 = 2,
-		Reserved_4 = 4,
-		AutoGearShift = 8,
-		Shifter = 16,
-		Reserved_32 = 32,
-		BrakeHelp = 64,
-		AxisClutch = 128,
-		InPits = 256,
-		AutoClutch = 512,
-		Mouse = 1024,
-		KbNoHelp = 2048,
-		KbStabilised = 4096,
-		CustomView = 8192
-	}
-
 	class UN
 	{
 		public string userName;
