@@ -29,10 +29,12 @@ namespace LFSStatistics
         ConsoleCtrl cc;
 		Configuration config;
 
-		/// <summary>
-		/// Resets objects used to collect statistics
-		/// </summary>
-		private void resetStatistics()
+        static readonly ManualResetEvent shutdownEvent = new ManualResetEvent(false);
+
+        /// <summary>
+        /// Resets objects used to collect statistics
+        /// </summary>
+        private void resetStatistics()
 		{
 			// created new since old ones are used during parallel export
 			raceStat = new Dictionary<int, SessionStats>();	//raceStat.Clear();
@@ -213,7 +215,11 @@ namespace LFSStatistics
                     throw new Exception("Could not connect to InSim. Check connection details.");
                 }
 
-                LoopAsync(insimConnection);
+                shutdownEvent.WaitOne();
+                if (insimConnection.IsConnected)
+                {
+                    insimConnection.Disconnect();
+                }
             }
 			catch (Exception ex)
             {
