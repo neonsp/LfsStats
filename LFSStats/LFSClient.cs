@@ -724,7 +724,7 @@ namespace LFSStatistics
                 sessionInfo.HName = newConnection.PName;
         }
 
-        void LoopAsync(InSimDotNet.InSim insimConnection)
+        void Loop(InSimDotNet.InSim insimConnection)
 		{
 			//bool inSession = false;
 			//bool inRace = false;
@@ -1210,11 +1210,9 @@ namespace LFSStatistics
                 //						}
                 //					}
                 //				}
+               
             }
-            if (insimConnection.IsConnected)
-            {
-                insimConnection.Disconnect();
-            }
+
             #endregion
         }
 
