@@ -20,160 +20,181 @@
  * Based on Graph v1.20 for LFS stats! (c) Alexander 'smith' Rudakov (piercemind@gmail.com)
  */
 using System;
+using System.Drawing;
+using System.Globalization;
+using System.IO;
 using System.Xml;
-
+using static NPlot.LegendBase;
 
 namespace Graph
 {
-	/// <summary>
-	/// Summary description for Settings.
-	/// </summary>
-	internal class Settings
-	{
-		public static System.Drawing.Font
-			commonFont = new System.Drawing.Font("Verdana", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
-		public static System.Drawing.Font
-			titleFont = new System.Drawing.Font("Verdana", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
-		public static System.Drawing.Font
-			lapTimesFont = new System.Drawing.Font("Verdana", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
-		public static NPlot.LegendBase.BorderType
-			legendBorderType = NPlot.LegendBase.BorderType.Line;
-		public static string TSVInputDirectory = ".";
-		public static string GraphOutputDirectory = "graph/";
-		public static string LapByLapGraphTitle = "Lap by lap graph";
-		public static string LapByLapGraphXAxisLabel = "Lap";
-		public static string LapByLapGraphYAxisLabel = "Position";
-		public static bool LapByLapGraphDisplayPositions = true;
-		public static string RaceProgressGraphTitle = "Race progress graph";
-		public static string RaceProgressGraphXAxisLabel = "Lap";
-		public static string RaceProgressGraphYAxisLabel = "Difference, seconds";
-		public static string LapTimesYAxisLabel = "Lap time, seconds";
-		public static bool LimitLapTimes = true;
-		public static bool OutputLapTimes = true;
-		public static double LimitMultiplier = 2.0;
-		public static bool LimitToGlobalBestLap = true;
+    /// <summary>
+    /// Summary description for Settings.
+    /// </summary>
+    internal class Settings
+    {
+        public static Font commonFont = new Font("Verdana", 10f, FontStyle.Regular, GraphicsUnit.Pixel);
 
-		public static int graphWidth = 960;
-		public static int graphHeight = 600;
-		public static int graphMinMax = 300;
+        public static Font titleFont = new Font("Verdana", 12f, FontStyle.Bold, GraphicsUnit.Pixel);
 
-		private static string GetConfigValue(XmlDocument doc, string path)
-		{
-			string result = "";
-			XmlNode child = doc.SelectSingleNode(path);
-			if (child != null)
-			{
-				XmlNodeReader nr = new XmlNodeReader(child);
-				while (nr.Read())
-					//					if (nr.Value != "")
-					if (!String.IsNullOrEmpty(nr.Value))
-					{
-						String delimeters = "\r\n ";
-						String outline = nr.Value;
-						outline = outline.Trim(delimeters.ToCharArray());
-						//						if (outline != "")
-						if (!String.IsNullOrEmpty(outline))
-							result += outline;
-					}
-			}
+        public static Font lapTimesFont = new Font("Verdana", 11f, FontStyle.Bold, GraphicsUnit.Pixel);
 
-			return result;
-		}
+        public static BorderType legendBorderType = (BorderType)1;
 
-		private static void GetConfigString(XmlDocument doc, string key, ref string keyvalue)
-		{
-			string tmpvalue = GetConfigValue(doc, key);
-			if (!String.IsNullOrEmpty(tmpvalue))
-				keyvalue = tmpvalue;
-		}
+        public static string TSVInputDirectory = ".";
 
-		private static void GetConfigInt(XmlDocument doc, string key, ref int keyvalue)
-		{
-			string tmpvalue = GetConfigValue(doc, key);
-			//			if (tmpvalue != "")
-			if (!String.IsNullOrEmpty(tmpvalue))
-				try
-				{
-					//					keyvalue = int.Parse(tmpvalue);
-					keyvalue = System.Int32.Parse(tmpvalue);
-				}
-				catch
-				{
-					System.Console.WriteLine(key + " must be an positive integer value");
-				}
-		}
+        public static string GraphOutputDirectory = "graph/";
 
-		private static void GetConfigDouble(XmlDocument doc, string key, ref double keyvalue)
-		{
-			string tmpvalue = GetConfigValue(doc, key);
-			if (!String.IsNullOrEmpty(tmpvalue))
-				try
-				{
-					tmpvalue = tmpvalue.Replace(".", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator);
-					tmpvalue = tmpvalue.Replace(",", System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator);
-					keyvalue = System.Double.Parse(tmpvalue);
-				}
-				catch (Exception e)
-				{
-					System.Console.WriteLine(key + " must be a positive double value (" + e.ToString() + ")");
-				}
-		}
+        public static string LapByLapGraphTitle = "Lap by lap graph";
 
+        public static string LapByLapGraphXAxisLabel = "Lap";
 
-		private static void GetConfigBool(XmlDocument doc, string key, ref bool keyvalue)
-		{
-			string tmpvalue = GetConfigValue(doc, key);
-			if (!String.IsNullOrEmpty(tmpvalue))
-				try
-				{
-					keyvalue = bool.Parse(tmpvalue);
-				}
-				catch
-				{
-					System.Console.WriteLine(key + " value must be true/false only");
-				}
+        public static string LapByLapGraphYAxisLabel = "Position";
 
-		}
+        public static bool LapByLapGraphDisplayPositions = true;
 
-		public static bool ReadSettings(string fileName)
-		{
-			XmlDocument doc = new XmlDocument();
+        public static string RaceProgressGraphTitle = "Race progress graph";
 
-			if (!System.IO.File.Exists(fileName))
-			{
-				System.Console.WriteLine("Can't open " + fileName + "!");
-				return false;
-			}
-			else
-			{
-				try
-				{
-					doc.Load(fileName);
-				}
-				catch (System.Xml.XmlException ex)
-				{
-					System.Console.WriteLine(ex.Message);
-					return false;
-				}
+        public static string RaceProgressGraphXAxisLabel = "Lap";
 
-				GetConfigString(doc, "GraphConfiguration/TSVInputDirectory", ref Settings.TSVInputDirectory);
-				GetConfigString(doc, "GraphConfiguration/GraphOutputDirectory", ref Settings.GraphOutputDirectory);
-				GetConfigInt(doc, "GraphConfiguration/GraphWidth", ref Settings.graphWidth);
-				GetConfigInt(doc, "GraphConfiguration/GraphHeight", ref Settings.graphHeight);
-				GetConfigInt(doc, "GraphConfiguration/RaceProgressGraphMinValue", ref Settings.graphMinMax);
-				GetConfigString(doc, "GraphConfiguration/RaceProgressGraphTitle", ref Settings.RaceProgressGraphTitle);
-				GetConfigString(doc, "GraphConfiguration/RaceProgressGraphXAxisLabel", ref Settings.RaceProgressGraphXAxisLabel);
-				GetConfigString(doc, "GraphConfiguration/RaceProgressGraphYAxisLabel", ref Settings.RaceProgressGraphYAxisLabel);
-				GetConfigString(doc, "GraphConfiguration/LapByLapGraphXAxisLabel", ref Settings.LapByLapGraphXAxisLabel);
-				GetConfigString(doc, "GraphConfiguration/LapByLapGraphYAxisLabel", ref Settings.LapByLapGraphYAxisLabel);
-				GetConfigBool(doc, "GraphConfiguration/LapByLapGraphDisplayPositions", ref Settings.LapByLapGraphDisplayPositions);
-				GetConfigString(doc, "GraphConfiguration/LapTimesYAxisLabel", ref Settings.LapTimesYAxisLabel);
-				GetConfigBool(doc, "GraphConfiguration/LimitLapTimes", ref Settings.LimitLapTimes);
-				GetConfigBool(doc, "GraphConfiguration/OutputLapTimes", ref Settings.OutputLapTimes);
-				GetConfigDouble(doc, "GraphConfiguration/LimitMultiplier", ref Settings.LimitMultiplier);
-				GetConfigBool(doc, "GraphConfiguration/LimitToGlobalBestLap", ref Settings.LimitToGlobalBestLap);
-				return true;
-			}
-		}
-	}
+        public static string RaceProgressGraphYAxisLabel = "Difference, seconds";
+
+        public static string LapTimesYAxisLabel = "Lap time, seconds";
+
+        public static bool LimitLapTimes = true;
+
+        public static bool OutputLapTimes = false;
+
+        public static double LimitMultiplier = 2.0;
+
+        public static bool LimitToGlobalBestLap = true;
+
+        public static int graphWidth = 800;
+
+        public static int graphHeight = 600;
+
+        public static int graphMinMax = 300;
+
+        private static string GetConfigValue(XmlDocument doc, string path)
+        {
+            string text = "";
+            XmlNode xmlNode = doc.SelectSingleNode(path);
+            if (xmlNode != null)
+            {
+                XmlNodeReader xmlNodeReader = new XmlNodeReader(xmlNode);
+                while (xmlNodeReader.Read())
+                {
+                    if (!string.IsNullOrEmpty(xmlNodeReader.Value))
+                    {
+                        string text2 = "\r\n ";
+                        string value = xmlNodeReader.Value;
+                        value = value.Trim(text2.ToCharArray());
+                        if (!string.IsNullOrEmpty(value))
+                        {
+                            text += value;
+                        }
+                    }
+                }
+            }
+
+            return text;
+        }
+
+        private static void GetConfigString(XmlDocument doc, string key, ref string keyvalue)
+        {
+            string configValue = GetConfigValue(doc, key);
+            if (!string.IsNullOrEmpty(configValue))
+            {
+                keyvalue = configValue;
+            }
+        }
+
+        private static void GetConfigInt(XmlDocument doc, string key, ref int keyvalue)
+        {
+            string configValue = GetConfigValue(doc, key);
+            if (!string.IsNullOrEmpty(configValue))
+            {
+                try
+                {
+                    keyvalue = int.Parse(configValue);
+                }
+                catch
+                {
+                    Console.WriteLine(key + " must be an positive integer value");
+                }
+            }
+        }
+
+        private static void GetConfigDouble(XmlDocument doc, string key, ref double keyvalue)
+        {
+            string configValue = GetConfigValue(doc, key);
+            if (!string.IsNullOrEmpty(configValue))
+            {
+                try
+                {
+                    configValue = configValue.Replace(".", NumberFormatInfo.CurrentInfo.NumberDecimalSeparator);
+                    configValue = configValue.Replace(",", NumberFormatInfo.CurrentInfo.NumberDecimalSeparator);
+                    keyvalue = double.Parse(configValue);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(key + " must be a positive double value (" + ex.ToString() + ")");
+                }
+            }
+        }
+
+        private static void GetConfigBool(XmlDocument doc, string key, ref bool keyvalue)
+        {
+            string configValue = GetConfigValue(doc, key);
+            if (!string.IsNullOrEmpty(configValue))
+            {
+                try
+                {
+                    keyvalue = bool.Parse(configValue);
+                }
+                catch
+                {
+                    Console.WriteLine(key + " value must be true/false only");
+                }
+            }
+        }
+
+        public static bool ReadSettings(string fileName)
+        {
+            XmlDocument xmlDocument = new XmlDocument();
+            if (!File.Exists(fileName))
+            {
+                Console.WriteLine("Can't open " + fileName + "!");
+                return false;
+            }
+
+            try
+            {
+                xmlDocument.Load(fileName);
+            }
+            catch (XmlException ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+
+            GetConfigString(xmlDocument, "GraphConfiguration/TSVInputDirectory", ref TSVInputDirectory);
+            GetConfigString(xmlDocument, "GraphConfiguration/GraphOutputDirectory", ref GraphOutputDirectory);
+            GetConfigInt(xmlDocument, "GraphConfiguration/GraphWidth", ref graphWidth);
+            GetConfigInt(xmlDocument, "GraphConfiguration/GraphHeight", ref graphHeight);
+            GetConfigInt(xmlDocument, "GraphConfiguration/RaceProgressGraphMinValue", ref graphMinMax);
+            GetConfigString(xmlDocument, "GraphConfiguration/RaceProgressGraphTitle", ref RaceProgressGraphTitle);
+            GetConfigString(xmlDocument, "GraphConfiguration/RaceProgressGraphXAxisLabel", ref RaceProgressGraphXAxisLabel);
+            GetConfigString(xmlDocument, "GraphConfiguration/RaceProgressGraphYAxisLabel", ref RaceProgressGraphYAxisLabel);
+            GetConfigString(xmlDocument, "GraphConfiguration/LapByLapGraphXAxisLabel", ref LapByLapGraphXAxisLabel);
+            GetConfigString(xmlDocument, "GraphConfiguration/LapByLapGraphYAxisLabel", ref LapByLapGraphYAxisLabel);
+            GetConfigBool(xmlDocument, "GraphConfiguration/LapByLapGraphDisplayPositions", ref LapByLapGraphDisplayPositions);
+            GetConfigString(xmlDocument, "GraphConfiguration/LapTimesYAxisLabel", ref LapTimesYAxisLabel);
+            GetConfigBool(xmlDocument, "GraphConfiguration/LimitLapTimes", ref LimitLapTimes);
+            GetConfigBool(xmlDocument, "GraphConfiguration/OutputLapTimes", ref OutputLapTimes);
+            GetConfigDouble(xmlDocument, "GraphConfiguration/LimitMultiplier", ref LimitMultiplier);
+            GetConfigBool(xmlDocument, "GraphConfiguration/LimitToGlobalBestLap", ref LimitToGlobalBestLap);
+            return true;
+        }
+    }
 }

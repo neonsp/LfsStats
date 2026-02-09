@@ -19,326 +19,299 @@
 /*
  * Based on Graph v1.20 for LFS stats! (c) Alexander 'smith' Rudakov (piercemind@gmail.com)
  */
+using NPlot;
 using System;
 using System.Collections;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
-using NPlot;
+using System.Windows.Forms;
+using static NPlot.Grid;
 
 namespace Graph
 {
-	/// <summary>
-	/// Summary description for LblData.
-	/// </summary>
+    /// <summary>
+    /// Summary description for LblData.
+    /// </summary>
 
-	internal class LblData
-	{
-		private string filename;
-		private NPlot.Windows.PlotSurface2D plot;
-		private ArrayList players;
-		private ArrayList splits;
-		private int xmax = 30;
-		private int nsplits;
-		private int winner;
-		private long winner_avgtime;
-		private long[] winner_avgsplits;
-		private double[] winner_avgsplitsproportions;
+    internal class LblData
+    {
+        private string filename;
 
-		public LblData(string fn)//, NPlot.Windows.PlotSurface2D pt)
-		{
-			filename = fn;
-			plot = new NPlot.Windows.PlotSurface2D();// pt;
+        private NPlot.Windows.PlotSurface2D plot;
 
-			// read file data
-			FileStream file = new FileStream(filename, FileMode.Open, FileAccess.Read);
-			StreamReader sr = new StreamReader(file);
-			string line = "";
+        private ArrayList players;
 
-			players = new ArrayList();
-			splits = new ArrayList();
+        private ArrayList splits;
 
-			nsplits = Convert.ToInt32(sr.ReadLine());
+        private int xmax = 30;
 
-			char[] splitter = { '\t' };
-			int playernum = 1;
-			try
-			{
-                while ((line = sr.ReadLine()) != null)
+        private int nsplits;
+
+        private int winner;
+
+        private long winner_avgtime;
+
+        private long[] winner_avgsplits;
+
+        private double[] winner_avgsplitsproportions;
+
+        public LblData(string fn)
+        {
+            //IL_0016: Unknown result type (might be due to invalid IL or missing references)
+            //IL_0020: Expected O, but got Unknown
+            filename = fn;
+            plot = new NPlot.Windows.PlotSurface2D();
+            FileStream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
+            StreamReader streamReader = new StreamReader(fileStream);
+            string text = "";
+            players = new ArrayList();
+            splits = new ArrayList();
+            nsplits = Convert.ToInt32(streamReader.ReadLine());
+            char[] separator = new char[1] { '\t' };
+            int num = 1;
+            while ((text = streamReader.ReadLine()) != null)
+            {
+                string[] array = text.Split(separator);
+                players.Add(array[0]);
+                splits.Add(new ArrayList());
+                splits[splits.Count - 1] = new long[array.Length];
+                for (int i = 0; i < array.Length; i++)
                 {
-					Console.WriteLine(line);
-                    string[] result = line.Split(splitter);
-                    players.Add(result[0]);
-
-                    splits.Add(new ArrayList());
-                    /*
-                                    splits[splits.Count-1] = new long[result.Length-1];
-                                    for (int i = 1; i < result.Length; ++i)
-                                    {
-                                        string num = result[i];
-                                        ((long [])splits[splits.Count-1])[i-1] = Convert.ToInt32(num);
-                                    }
-                    */
-                    splits[splits.Count - 1] = new long[result.Length];
-					for (int i = 0; i < result.Length; ++i) {
-						Console.WriteLine(i);
-                        if (i == 0)
-                        {
-                            ((long[])splits[splits.Count - 1])[i] = Convert.ToInt32(playernum++);
-                        }
-                        else
-                        {
-                            string num = result[i];
-                            ((long[])splits[splits.Count - 1])[i] = Convert.ToInt32(num);
-                        }
+                    if (i == 0)
+                    {
+                        ((long[])splits[splits.Count - 1])[i] = Convert.ToInt32(num++);
+                        continue;
                     }
-                        
+
+                    string value = array[i];
+                    ((long[])splits[splits.Count - 1])[i] = Convert.ToInt32(value);
                 }
             }
-			catch(Exception ex)
-			{
 
-			}
+            fileStream.Close();
+            Stats();
+        }
 
-			file.Close();
-			this.Stats();
-		}
+        private void Stats()
+        {
+            winner = 0;
+            int num = 0;
+            long num2 = 2147352578L;
+            for (int i = 0; i < players.Count; i++)
+            {
+                int num3 = ((long[])splits[i]).Length - 1;
+                if ((((long[])splits[winner]).Length - 1 <= 0 && ((long[])splits[i]).Length - 1 > 0) || (num3 != -1 && ((long[])splits[i])[num3] <= num2 && num3 >= num) || (num3 != -1 && ((long[])splits[i])[num3] >= num2 && num3 > num))
+                {
+                    winner = i;
+                    num = num3;
+                    num2 = ((long[])splits[i])[num3];
+                }
+            }
 
-		private void Stats()
-		{
-			// find a winner
-			winner = 0;
-			int winner_splits = 0;
-			long fastest_time = 32767 * 32767 * 2;
-			for (int p = 0; p < players.Count; ++p)
-			{
-				int len = ((long[])splits[p]).Length - 1;
-				if (((long[])splits[winner]).Length - 1 <= 0 && ((long[])splits[p]).Length - 1 > 0
-					|| len != -1 && ((long[])splits[p])[len] <= fastest_time && len >= winner_splits
-					|| len != -1 && ((long[])splits[p])[len] >= fastest_time && len > winner_splits)
-				//				|| len != -1 && ((long [])splits[p])[len] <= fastest_time && len > winner_splits)
-				{
-					winner = p;
-					winner_splits = len;
-					fastest_time = ((long[])splits[p])[len];
-				}
-			}
+            winner_avgtime = ((long[])splits[winner])[((long[])splits[winner]).Length - 1] / (((long[])splits[winner]).Length / nsplits);
+            winner_avgsplits = new long[nsplits + 1];
+            winner_avgsplitsproportions = new double[nsplits + 1];
+            for (int j = 0; j < nsplits; j++)
+            {
+                int num4 = 0;
+                for (int k = j; k < ((long[])splits[winner]).Length; k += nsplits)
+                {
+                    if (k == 0)
+                    {
+                        winner_avgsplits[j + 1] += ((long[])splits[winner])[k];
+                    }
+                    else
+                    {
+                        winner_avgsplits[j + 1] += ((long[])splits[winner])[k] - ((long[])splits[winner])[k - 1];
+                    }
 
-			// find a winner average lap and splits time
-			winner_avgtime = (((long[])splits[winner])[((long[])splits[winner]).Length - 1]) / (((long[])splits[winner]).Length / (nsplits));
-			winner_avgsplits = new long[nsplits + 1];
-			winner_avgsplitsproportions = new double[nsplits + 1];
+                    num4++;
+                }
 
-			for (int s = 0; s < nsplits; ++s)
-			{
-				int n = 0;
-				for (int i = s; i < ((long[])splits[winner]).Length; i = i + nsplits)
-				{
-					if (i == 0)
-						winner_avgsplits[s + 1] += ((long[])splits[winner])[i];
-					else
-						winner_avgsplits[s + 1] += ((long[])splits[winner])[i] - ((long[])splits[winner])[i - 1];
-					++n;
+                winner_avgsplits[j + 1] /= num4;
+            }
 
-				}
-				winner_avgsplits[s + 1] /= n;
-			}
+            for (int l = 0; l <= nsplits; l++)
+            {
+                winner_avgsplitsproportions[l] = (double)winner_avgsplits[l] / (double)winner_avgtime;
+            }
+        }
 
-			for (int s = 0; s <= nsplits; ++s)
-			{
-				winner_avgsplitsproportions[s] = (double)winner_avgsplits[s] / (double)winner_avgtime;
-			}
-		}
+        public void Draw()
+        {
+            //IL_000b: Unknown result type (might be due to invalid IL or missing references)
+            //IL_0011: Expected O, but got Unknown
+            //IL_0099: Unknown result type (might be due to invalid IL or missing references)
+            //IL_009f: Expected O, but got Unknown
+            //IL_00ef: Unknown result type (might be due to invalid IL or missing references)
+            //IL_00f5: Expected O, but got Unknown
+            //IL_015a: Unknown result type (might be due to invalid IL or missing references)
+            //IL_0161: Expected O, but got Unknown
+            //IL_01d8: Unknown result type (might be due to invalid IL or missing references)
+            //IL_01df: Expected O, but got Unknown
+            //IL_027e: Unknown result type (might be due to invalid IL or missing references)
+            //IL_0285: Expected O, but got Unknown
+            //IL_029c: Unknown result type (might be due to invalid IL or missing references)
+            //IL_0430: Unknown result type (might be due to invalid IL or missing references)
+            //IL_0437: Expected O, but got Unknown
+            plot.Clear();
+            Grid val = new Grid();
+            val.VerticalGridType = (GridType)1;
+            val.HorizontalGridType = (GridType)1;
+            val.MajorGridPen = new Pen(Color.LightGray, 1f);
+            plot.Add((IDrawable)(object)val);
+            xmax = ((long[])splits[winner]).Length / nsplits;
+            int num = 1;
+            if (xmax <= 30)
+            {
+                num = 1;
+            }
+            else if (xmax > 30 && xmax <= 60)
+            {
+                num = 2;
+            }
+            else if (xmax > 60)
+            {
+                num = 3;
+            }
 
-		public void Draw()
-		{
-			this.plot.Clear();
+            LinearAxis val2 = new LinearAxis();
+            val2.NumberOfSmallTicks = 0;
+            val2.LargeTickStep = num;
+            ((Axis)val2).HideTickText = true;
+            ((Axis)val2).WorldMin = 0.0;
+            ((Axis)val2).WorldMax = xmax;
+            ((Axis)val2).TicksCrossAxis = true;
+            plot.XAxis1 = (Axis)(object)val2;
+            LinearAxis val3 = new LinearAxis(plot.XAxis1);
+            ((Axis)val3).Label = Settings.LapByLapGraphXAxisLabel;
+            val3.NumberOfSmallTicks = 0;
+            val3.LargeTickStep = num;
+            ((Axis)val3).WorldMin = 0.0;
+            ((Axis)val3).WorldMax = xmax;
+            ((Axis)val3).HideTickText = false;
+            ((Axis)val3).LabelFont = Settings.commonFont;
+            plot.XAxis2 = (Axis)(object)val3;
+            plot.XAxis1.LargeTickSize = 0;
+            LinearAxis val4 = new LinearAxis();
+            ((Axis)val4).Label = Settings.LapByLapGraphYAxisLabel;
+            val4.NumberOfSmallTicks = 0;
+            ((Axis)val4).Reversed = true;
+            val4.LargeTickStep = 1.0;
+            ((Axis)val4).WorldMin = 0.5;
+            ((Axis)val4).WorldMax = (float)players.Count + 0.5f;
+            ((Axis)val4).LabelFont = Settings.commonFont;
+            ((Axis)val4).TicksCrossAxis = true;
+            plot.YAxis1 = (Axis)(object)val4;
+            LinearAxis val5 = new LinearAxis();
+            val5.NumberOfSmallTicks = 0;
+            ((Axis)val5).Reversed = true;
+            val5.LargeTickStep = 1.0;
+            ((Axis)val5).WorldMin = 0.5;
+            ((Axis)val5).WorldMax = (float)players.Count + 0.5f;
+            ((Axis)val5).LabelFont = Settings.commonFont;
+            ((Axis)val5).TickTextNextToAxis = false;
+            ((Axis)val5).Label = "";
+            ((Axis)val5).TicksCrossAxis = true;
+            plot.YAxis2 = (Axis)(object)val5;
+            plot.Title = Settings.LapByLapGraphTitle;
+            plot.TitleFont = Settings.titleFont;
+            Legend val6 = new Legend();
+            ((LegendBase)val6).Font = Settings.commonFont;
+            val6.XOffset = 30;
+            ((LegendBase)val6).BorderStyle = Settings.legendBorderType;
+            plot.Legend = val6;
+            plot.PlotBackColor = Color.White;
+            this.plot.BackColor = Color.White;
+            for (int i = 0; i < players.Count; i++)
+            {
+                int[] array = new int[((long[])splits[i]).Length];
+                double[] array2 = new double[((long[])splits[i]).Length];
+                int num2 = 0;
+                int num3 = 0;
+                for (int j = 0; j < ((long[])splits[winner]).Length; j++)
+                {
+                    if (j < array.Length)
+                    {
+                        double num4 = 0.0;
+                        for (int k = 0; k < num2; k++)
+                        {
+                            num4 += winner_avgsplitsproportions[k + 1];
+                        }
 
-			Grid testGrid = new Grid();
-			testGrid.VerticalGridType = Grid.GridType.Coarse;
-			testGrid.HorizontalGridType = Grid.GridType.Coarse;
-			testGrid.MajorGridPen = new Pen(Color.LightGray, 1f);
-			this.plot.Add(testGrid);
+                        array2[j] = (double)num3 + num4;
+                    }
 
-			xmax = ((long[])splits[winner]).Length / nsplits;
-			int tickstep = 1;
-			if (xmax <= 30)
-				tickstep = 1;
-			else
-				if (xmax > 30 && xmax <= 60)
-					tickstep = 2;
-				else
-					if (xmax > 60)
-						tickstep = 3;
+                    int num5 = 1;
+                    for (int l = 0; l < players.Count; l++)
+                    {
+                        if (l != i && ((long[])splits[i]).Length > j && ((long[])splits[l]).Length > j && ((long[])splits[l])[j] < ((long[])splits[i])[j])
+                        {
+                            num5++;
+                        }
+                    }
 
-			LinearAxis lx1 = new LinearAxis();
+                    if (j < array.Length)
+                    {
+                        array[j] = num5;
+                    }
 
-			/*			if (tickstep > 1)
-							lx1.NumberOfSmallTicks = 0;
-						else
-							lx1.NumberOfSmallTicks = nsplits -1; 
-			*/
-			lx1.NumberOfSmallTicks = 0;
-			lx1.LargeTickStep = tickstep;
-			lx1.HideTickText = true;
-			lx1.WorldMin = 0;
-			lx1.WorldMax = xmax;
-			lx1.TicksCrossAxis = true;
-			this.plot.XAxis1 = lx1;
+                    num2++;
+                    if (num2 == nsplits)
+                    {
+                        num2 = 0;
+                        num3++;
+                    }
+                }
 
-			LinearAxis lx2 = new LinearAxis(this.plot.XAxis1);
-			lx2.Label = Settings.LapByLapGraphXAxisLabel;
-			lx2.NumberOfSmallTicks = 0;
-			lx2.LargeTickStep = tickstep;
-			lx2.WorldMin = 0;
-			lx2.WorldMax = xmax;
-			lx2.HideTickText = false;
-			lx2.LabelFont = Settings.commonFont;
-			this.plot.XAxis2 = lx2;
-			this.plot.XAxis1.LargeTickSize = 0;
+                LinePlot val7 = new LinePlot();
+                ((BaseSequencePlot)val7).AbscissaData = array2;
+                ((BaseSequencePlot)val7).OrdinateData = array;
+                val7.Pen = new Pen(Colors.GetColor(i), 2f);
+                int num6 = i + 1;
+                int num7 = num6;
+                if (array.Length - 1 >= 0)
+                {
+                    num7 = array[array.Length - 1];
+                }
 
-			LinearAxis ly1 = new LinearAxis();
-			ly1.Label = Settings.LapByLapGraphYAxisLabel;
-			ly1.NumberOfSmallTicks = 0;
-			ly1.Reversed = true;
-			ly1.LargeTickStep = 1;
-			ly1.WorldMin = 0.5f;
-			ly1.WorldMax = players.Count + 0.5f;
-			ly1.LabelFont = Settings.commonFont;
-			ly1.TicksCrossAxis = true;
-			this.plot.YAxis1 = ly1;
+                if (Settings.LapByLapGraphDisplayPositions)
+                {
+                    ((BasePlot)val7).Label = $"{num6:00}-{num7:00} {players[i].ToString():g}";
+                }
+                else
+                {
+                    ((BasePlot)val7).Label = $"{players[i].ToString():g}";
+                }
 
-			LinearAxis ly2 = new LinearAxis();
-			ly2.NumberOfSmallTicks = 0;
-			ly2.Reversed = true;
-			ly2.LargeTickStep = 1;
-			ly2.WorldMin = 0.5f;
-			ly2.WorldMax = players.Count + 0.5f;
-			ly2.LabelFont = Settings.commonFont;
-			ly2.TickTextNextToAxis = false;
-			ly2.Label = "";
-			ly2.TicksCrossAxis = true;
-			this.plot.YAxis2 = ly2;
+                plot.Add((IDrawable)(object)val7);
+                plot.YAxis1.WorldMin = 0.0;
+                plot.YAxis2.WorldMin = 0.0;
+                plot.XAxis1.WorldMax = xmax;
+                plot.XAxis2.WorldMax = xmax;
+            }
 
-			this.plot.Title = Settings.LapByLapGraphTitle;
-			this.plot.TitleFont = Settings.titleFont;
+            plot.YAxis1.WorldMax = (float)players.Count + 0.5f;
+            ((Axis)val2).WorldMin = 0.0;
+            ((Axis)val2).WorldMax = xmax;
+            ((Axis)val3).WorldMin = 0.0;
+            ((Axis)val3).WorldMax = xmax;
+            plot.Refresh();
+        }
 
-			Legend lg = new Legend();
-			lg.Font = Settings.commonFont;
-			lg.XOffset = 30;
-			lg.BorderStyle = Settings.legendBorderType;
-			lg.BackgroundColor = Color.Transparent;
-			lg.TextColor = Color.Black;
-			lg.BorderColor = Color.Black;
-			this.plot.Legend = lg;
-
-			this.plot.PlotBackColor = Color.Transparent;
-			this.plot.BackColor = Color.White;
-
-			//			double minx = 0;
-
-			for (int i = 0; i < players.Count; ++i)
-			//			for (int i=winner; i<= winner; ++i)
-			{
-				int[] positions = new int[((long[])splits[i]).Length];
-				double[] laps = new double[((long[])splits[i]).Length];
-				int splitN = 0;
-				int l = 0;
-
-				for (int split = 0; split < ((long[])splits[winner]).Length; ++split)
-				{
-
-					if (split < positions.Length)
-					{
-						double prop = 0;
-						for (int pr = 0; pr < splitN; ++pr)
-							prop += winner_avgsplitsproportions[pr + 1];
-						laps[split] = (double)l + prop;
-					}
-
-					int pos = 1;
-
-					for (int p = 0; p < players.Count; ++p)
-						if (p != i && ((long[])(splits[i])).Length > split && ((long[])(splits[p])).Length > split && ((long[])(splits[p]))[split] < ((long[])(splits[i]))[split])
-							++pos;
-
-					if (split < positions.Length)
-						positions[split] = pos;
-
-					++splitN;
-					if (splitN == nsplits)
-					{
-						splitN = 0;
-						++l;
-					}
-
-				}
-
-
-				LinePlot lp = new LinePlot();
-				//				lp.DataSource = positions;
-				lp.AbscissaData = laps;
-				lp.OrdinateData = positions;
-
-				lp.Pen = new Pen(Colors.GetColor(i), 2.0f);
-				int start = i + 1;
-				int end = start;
-				if (positions.Length - 1 >= 0)
-					end = positions[positions.Length - 1];
-
-				if (Settings.LapByLapGraphDisplayPositions)
-					lp.Label = String.Format("{0:00}-{1:00} {2:g}", start, end, players[i].ToString());
-				else
-					lp.Label = String.Format("{0:g}", players[i].ToString());
-
-				this.plot.Add(lp);
-				this.plot.YAxis1.WorldMin = 0;
-				this.plot.YAxis2.WorldMin = 0;
-
-				/*
-								Marker mk = new Marker();
-								mk.Color = System.Drawing.Color.Red;
-				//                mk.Type = Marker.MarkerType.FlagUp;
-								mk.Type = Marker.MarkerType.FlagUp;
-								mk.Size = 15;
-								int[] abs = {1,2,3,4,5,6,7,8,9,10};
-								int[] ord = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-								abs.Add
-								PointPlot pp = new PointPlot(mk);
-								pp.ShowInLegend = false;
-								pp.AbscissaData = abs;
-								pp.OrdinateData = ord;
-								this.plot.Add(pp);
-				*/
-
-				this.plot.XAxis1.WorldMax = xmax;
-				this.plot.XAxis2.WorldMax = xmax;
-
-			}
-
-			this.plot.YAxis1.WorldMax = players.Count + 0.5f;
-
-			lx1.WorldMin = 0;
-			lx1.WorldMax = xmax;
-			lx2.WorldMin = 0;
-			lx2.WorldMax = xmax;
-
-			this.plot.Refresh();
-		}
-
-		public void Save(string outfile, int width, int height)
-		{
-			Bitmap b = new Bitmap(width, height);
-			//			System.IO.MemoryStream stream = new System.IO.MemoryStream();
-			this.plot.Draw(Graphics.FromImage(b), new System.Drawing.Rectangle(0, 0, b.Width, b.Height));
-			try
-			{
-				b.Save(outfile, System.Drawing.Imaging.ImageFormat.Png);
-			}
-			catch
-			{
-				System.Console.WriteLine("Error! Cannot create " + outfile);
-
-			};
-		}
-	}
+        public void Save(string outfile, int width, int height)
+        {
+            Bitmap bitmap = new Bitmap(width, height);
+            plot.Draw(Graphics.FromImage(bitmap), new Rectangle(0, 0, bitmap.Width, bitmap.Height));
+            try
+            {
+                bitmap.Save(outfile, ImageFormat.Png);
+            }
+            catch
+            {
+                Console.WriteLine("Error! Cannot create " + outfile);
+            }
+        }
+    }
 }

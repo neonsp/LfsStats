@@ -19,121 +19,103 @@
 /*
  * Based on Graph v1.20 for LFS stats! (c) Alexander 'smith' Rudakov (piercemind@gmail.com)
  */
+using System;
 using System.IO;
 
 namespace Graph
 {
-	public class Graph
-	{
-		private static LblData lblData;
-		private static RprData rprData;
-		private static LapData lapData;
+    public class Graph
+    {
+        private static LblData lblData;
 
+        private static RprData rprData;
 
-		public static void GenerateGraph()
-		{
-			if (Settings.ReadSettings("graph.xml"))
-			{
-				//string currentDir = System.IO.Directory.GetCurrentDirectory();
-				string outdir = Settings.GraphOutputDirectory;
-				System.IO.Directory.CreateDirectory(outdir);
+        private static LapData lapData;
 
-				DirectoryInfo dir = new DirectoryInfo(Settings.TSVInputDirectory);
+        public static void GenerateGraph()
+        {
+            if (!Settings.ReadSettings("graph.xml"))
+            {
+                return;
+            }
 
-				//try
-				//{
-				for (int i = 0; i < dir.GetFiles("*results_race_extended.tsv").Length; i++)
-				{
-					string tsvfile = dir.GetFiles("*results_race_extended.tsv")[i].Name;
-					string picfile = "";
+            string graphOutputDirectory = Settings.GraphOutputDirectory;
+            Directory.CreateDirectory(graphOutputDirectory);
+            DirectoryInfo directoryInfo = new DirectoryInfo(Settings.TSVInputDirectory);
+            try
+            {
+                for (int i = 0; i < directoryInfo.GetFiles("*results_race_extended.tsv").Length; i++)
+                {
+                    string name = directoryInfo.GetFiles("*results_race_extended.tsv")[i].Name;
+                    string text = "";
+                    FileInfo fileInfo = new FileInfo(Settings.TSVInputDirectory + name);
+                    if (fileInfo.Length > 20)
+                    {
+                        text = name.Substring(0, name.Length - 26);
+                        string text2 = graphOutputDirectory + text + "_lbl.png";
+                        FileInfo fileInfo2 = new FileInfo(text2);
+                        if (!fileInfo2.Exists || fileInfo2.Length == 0)
+                        {
+                            lblData = new LblData(Settings.TSVInputDirectory + name);
+                            lblData.Draw();
+                            lblData.Save(text2, Settings.graphWidth, Settings.graphHeight);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return;
+            }
 
-					FileInfo fitsv = new FileInfo(Settings.TSVInputDirectory + tsvfile);
+            for (int j = 0; j < directoryInfo.GetFiles("*results_race_extended.tsv").Length; j++)
+            {
+                string name2 = directoryInfo.GetFiles("*results_race_extended.tsv")[j].Name;
+                string text3 = "";
+                FileInfo fileInfo3 = new FileInfo(Settings.TSVInputDirectory + name2);
+                if (fileInfo3.Length > 20)
+                {
+                    text3 = name2.Substring(0, name2.Length - 26);
+                    string text4 = graphOutputDirectory + text3 + "_rpr.png";
+                    FileInfo fileInfo4 = new FileInfo(text4);
+                    if (!fileInfo4.Exists || fileInfo4.Length == 0)
+                    {
+                        rprData = new RprData(Settings.TSVInputDirectory + name2);
+                        rprData.Draw();
+                        rprData.Save(text4, Settings.graphWidth, Settings.graphHeight);
+                    }
+                }
+            }
 
-					if (fitsv.Length > 20)
-					{
-						picfile = tsvfile.Substring(0, tsvfile.Length - 26);
+            if (!Settings.OutputLapTimes)
+            {
+                return;
+            }
 
-						string outfilename = outdir + picfile + "_lbl.png";
-						FileInfo fi = new FileInfo(outfilename);
-
-						if (!fi.Exists || fi.Length == 0)
-						{
-							lblData = new LblData(Settings.TSVInputDirectory + tsvfile);
-							lblData.Draw();
-							lblData.Save(outfilename, Settings.graphWidth, Settings.graphHeight);
-						}
-
-						//                            System.Console.WriteLine(Settings.TSVInputDirectory + tsvfile);
-					}
-				}
-				//}
-				//catch (System.Exception ex) // assume the directory path error
-				//{
-				//    System.Console.Error.WriteLine("Graph error.\n");
-				//    System.Console.Error.WriteLine(ex.ToString());
-				//    // System.Console.WriteLine("Path "+Settings.TSVInputDirectory+" not found");
-				//    return;
-				//}
-
-				for (int i = 0; i < dir.GetFiles("*results_race_extended.tsv").Length; i++)
-				{
-					string tsvfile = dir.GetFiles("*results_race_extended.tsv")[i].Name;
-
-					string picfile = "";
-
-					FileInfo fitsv = new FileInfo(Settings.TSVInputDirectory + tsvfile);
-
-					if (fitsv.Length > 20)
-					{
-						picfile = tsvfile.Substring(0, tsvfile.Length - 26);
-
-						string outfilename = outdir + picfile + "_rpr.png";
-						FileInfo fi = new FileInfo(outfilename);
-
-						if (!fi.Exists || fi.Length == 0)
-						{
-							rprData = new RprData(Settings.TSVInputDirectory + tsvfile);
-							rprData.Draw();
-							rprData.Save(outfilename, Settings.graphWidth, Settings.graphHeight);
-						}
-					}
-
-				}
-
-				if (Settings.OutputLapTimes)
-					for (int i = 0; i < dir.GetFiles("*results_race_extended.tsv").Length; i++)
-					{
-						string tsvfile = dir.GetFiles("*results_race_extended.tsv")[i].Name;
-
-						lapData = new LapData(Settings.TSVInputDirectory + tsvfile);
-
-						for (int player = 0; player < lapData.players.Count; ++player)
-						{
-							string picfile = "";
-
-							FileInfo fitsv = new FileInfo(Settings.TSVInputDirectory + tsvfile);
-
-							if (fitsv.Length > 20)
-							{
-								picfile = tsvfile.Substring(0, tsvfile.Length - 26);
-
-								string outfilename = outdir + picfile + "_lap_" + System.Convert.ToString(player + 1) + ".png";
-								FileInfo fi = new FileInfo(outfilename);
-
-								if (!fi.Exists || fi.Length == 0)
-								{
-									lapData.player = player;
-									lapData.Stats();
-									lapData.Draw();
-									lapData.Save(outfilename, Settings.graphWidth, Settings.graphHeight);
-								}
-							}
-						}
-
-					}
-
-			}
-		}
-
-	}
+            for (int k = 0; k < directoryInfo.GetFiles("*results_race_extended.tsv").Length; k++)
+            {
+                string name3 = directoryInfo.GetFiles("*results_race_extended.tsv")[k].Name;
+                lapData = new LapData(Settings.TSVInputDirectory + name3);
+                for (int l = 0; l < lapData.players.Count; l++)
+                {
+                    string text5 = "";
+                    FileInfo fileInfo5 = new FileInfo(Settings.TSVInputDirectory + name3);
+                    if (fileInfo5.Length > 20)
+                    {
+                        text5 = name3.Substring(0, name3.Length - 26);
+                        string text6 = graphOutputDirectory + text5 + "_lap_" + Convert.ToString(l + 1) + ".png";
+                        FileInfo fileInfo6 = new FileInfo(text6);
+                        if (!fileInfo6.Exists || fileInfo6.Length == 0)
+                        {
+                            lapData.player = l;
+                            lapData.Stats();
+                            lapData.Draw();
+                            lapData.Save(text6, Settings.graphWidth, Settings.graphHeight);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

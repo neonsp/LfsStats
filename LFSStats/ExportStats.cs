@@ -325,7 +325,7 @@ namespace LFSStatistics
 			SessionStats playerStats;
 			string outputDir;
 
-			if (!fileName.EndsWith(htmlDotExtension, StringComparison.OrdinalIgnoreCase)) fileName += htmlDotExtension;
+			if (!fileName.EndsWith(htmlDotExtension, StringComparison.OrdinalIgnoreCase)) fileName += "_results_race" + htmlDotExtension;
 
 			switch (sessionInfo.session)
 			{

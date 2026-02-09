@@ -54,7 +54,7 @@ namespace Graph
 
 		public static Color GetColor(int colorN)
 		{
-			if (colorN >= 0 && colorN < colors.GetLength(0))
+			if (colorN >= 0 && colorN < colors.Length)
 				return colors[colorN];
 			else
 				return Color.Black;

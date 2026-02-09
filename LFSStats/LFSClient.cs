@@ -1,5 +1,4 @@
 ﻿using InSimDotNet;
-using InSimDotNet.Helpers;
 using InSimDotNet.Packets;
 using System;
 using System.Collections.Generic;
@@ -1374,30 +1373,44 @@ namespace LFSStatistics
 			LFSStats.WriteLineFromAsync("Race Stats exported (" + sw.ElapsedMilliseconds + "ms" + ")", Verbose.Program);
 
 			sw.Restart();
-			// Call graph generator
-			try
-			{
-				switch (config.GenerateGraphs)
-				{
-					case Configuration.GraphOptions.no:
-					default:
-						graph = "No";
-						break;
-					case Configuration.GraphOptions.dll:
-						graph = "Graph.dll";
-						Graph.Graph.GenerateGraph();
-						break;
-					case Configuration.GraphOptions.exe:
-						graph = "Graph.exe";
-						Process graphProcess = Process.Start("Graph.exe");	// should be parallel, LFSStats does not wait for exit
-						//graphProcess.WaitForExit();	// only to test it's processing performance
-						break;
-				}
-			}
-			catch (Exception ex)
-			{
-				LFSStats.ErrorWriteException("Graph exception occurred:", ex);
-			}
+            // Call graph generator
+
+            try
+            {
+                global::Graph.Graph.GenerateGraph();
+                Console.WriteLine("> Graphs generated <");
+                Thread.Sleep(2000);
+                Process.Start("YGraph.exe");
+                Console.WriteLine("> Y-Graph generated <");
+            }
+            catch (Exception ex)
+            {
+                LFSStats.ErrorWriteException("Graph exception occurred:", ex);
+            }
+
+   //         try
+			//{
+			//	switch (config.GenerateGraphs)
+			//	{
+			//		case Configuration.GraphOptions.no:
+			//		default:
+			//			graph = "No";
+			//			break;
+			//		case Configuration.GraphOptions.dll:
+			//			graph = "Graph.dll";
+			//			Graph.Graph.GenerateGraph();
+			//			break;
+			//		case Configuration.GraphOptions.exe:
+			//			graph = "Graph.exe";
+			//			Process graphProcess = Process.Start("Graph.exe");	// should be parallel, LFSStats does not wait for exit
+			//			//graphProcess.WaitForExit();	// only to test it's processing performance
+			//			break;
+			//	}
+			//}
+			//catch (Exception ex)
+			//{
+			//	LFSStats.ErrorWriteException("Graph exception occurred:", ex);
+			//}
 
 			sw.Stop();
 			LFSStats.WriteLineFromAsync(graph + " graphs generated (" + sw.ElapsedMilliseconds + "ms" + ")", Verbose.Program);
