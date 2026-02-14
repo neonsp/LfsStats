@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 
@@ -11,10 +10,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Jaroslav Černý")]
 [assembly: AssemblyProduct("LFSStats")]
-[assembly: AssemblyCopyright("Copyright © 2008-2013 Jaroslav Černý")]
+[assembly: AssemblyCopyright("Copyright © 2008-2026 Robert B., Jaroslav Černý, Ricardo")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
-//[assembly: CommandLine.AssemblyLicense("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 
@@ -34,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.1.303.411")]
-[assembly: AssemblyFileVersion("2.1.0.0")]
+[assembly: AssemblyVersion("3.0.1.001")]
+[assembly: AssemblyFileVersion("3.0.1.001")]

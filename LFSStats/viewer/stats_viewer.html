@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>LFS Race Stats</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <link rel="stylesheet" type="text/css" href="stats.css">
+    <script src="translations.js"></script>
+</head>
+<body>
+    <div class="header">
+        <div id="race-title"></div>
+        <div id="race-info"></div>
+    </div>
+    
+    <div id="summary-card"></div>
+    
+    <div class="tabs">
+        <div class="tab active" data-tab="results" data-i18n="results">🏁 <span class="tab-text">Results</span></div>
+        <div class="tab" data-tab="overview" data-i18n="overview">📋 <span class="tab-text">Overview</span></div>
+        <div class="tab" data-tab="stints" id="stints-tab" data-i18n="driverStints" style="display:none;">🔄 <span class="tab-text">Driver Stints</span></div>
+        <div class="tab" data-tab="lbl" data-i18n="lapByLap">📊 <span class="tab-text">Lap by Lap</span></div>
+        <div class="tab" data-tab="graph" data-i18n="positionGraph">📈 <span class="tab-text">Position Graph</span></div>
+        <div class="tab" data-tab="progress" data-i18n="raceProgress">⏱️ <span class="tab-text">Race Progress</span></div>
+        <div class="tab" data-tab="best-times" data-i18n="bestTimes">⚡ <span class="tab-text">Best Times</span></div>
+        <div class="tab" data-tab="compare" data-i18n="compare">🔍 <span class="tab-text">Compare</span></div>
+        <div class="tab" data-tab="analysis" data-i18n="analysis">📉 <span class="tab-text">Analysis</span></div>
+        <div class="tab" data-tab="incidents" data-i18n="incidents">⚠️ <span class="tab-text">Incidents</span></div>
+        <div class="tab" data-tab="chat" data-i18n="chat" id="chat-tab" style="display:none;">💬 <span class="tab-text">Chat</span></div>
+    </div>
+    
+    <div id="results" class="content active"></div>
+    <div id="overview" class="content"></div>
+    <div id="stints" class="content"></div>
+    <div id="lbl" class="content"></div>
+    <div id="graph" class="content">
+        <h2>📈 <span data-i18n="positionGraph">Position Graph</span></h2>
+        <div id="graph-container">
+            <canvas id="position-graph"></canvas>
+        </div>
+        <div class="graph-legend">
+            <div class="legend-item">
+                <span class="legend-marker pit-marker">P</span>
+                <span class="legend-text" data-i18n="pitStop"></span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-marker personal-best-marker">▶</span>
+                <span class="legend-text" data-i18n="personalBest"></span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-marker fastest-lap-marker">★</span>
+                <span class="legend-text" data-i18n="fastestLap"></span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-marker dnf-marker">✕</span>
+                <span class="legend-text" data-i18n="dnfMarker"></span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-marker lapped-marker">╌╌╌</span>
+                <span class="legend-text" data-i18n="lappedMarker"></span>
+            </div>
+            <div id="position-toggle-all" class="legend-item">
+                <span class="legend-marker">👥</span>
+                <span class="legend-text" data-i18n="hideAll"></span>
+            </div>
+        </div>
+    </div>
+    <div id="progress" class="content">
+        <h2>⏱️ <span data-i18n="raceProgress">Race Progress</span></h2>
+        <div id="progress-graph-container">
+            <canvas id="progress-graph"></canvas>
+        </div>
+        <div class="graph-legend" id="progress-legend">
+            <div class="legend-item">
+                <span class="legend-marker pit-marker">P</span>
+                <span class="legend-text" data-i18n="pitStop"></span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-marker dnf-marker">✕</span>
+                <span class="legend-text" data-i18n="dnfMarker"></span>
+            </div>
+            <div id="progress-toggle-all" class="legend-item">
+                <span class="legend-marker">👥</span>
+                <span class="legend-text" data-i18n="hideAll"></span>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
+    <script>
+        // Register zoom plugin
+        if (typeof Chart !== 'undefined' && typeof ChartZoom !== 'undefined') {
+            Chart.register(ChartZoom);
+        }
+    </script>
+    <div id="compare" class="content"></div>
+    <div id="best-times" class="content"></div>
+    <div id="incidents" class="content"></div>
+    <div id="analysis" class="content"></div>
+    <div id="chat" class="content"></div>
+    
+    <script src="stats_renderer.js"></script>
+    <footer class="site-footer">
+        <span id="app-version"></span> · Originally created by Robert B. (Gai-Luron), JackCY & Yamakawa · Expanded by Ricardo (NeoN)
+        <div id="exported-at"></div>
+    </footer>
+</body>
+</html>
