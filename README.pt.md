@@ -1,4 +1,4 @@
-# LFS Stats v3.0.1
+# LFS Stats v3.0.2
 
 **Gerador de estatísticas e visualizador interativo para [Live for Speed](https://www.lfs.net/).**
 
