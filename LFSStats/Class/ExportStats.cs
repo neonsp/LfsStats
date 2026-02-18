@@ -127,7 +127,7 @@ namespace LFSStatistics
                 sessionLength = sessionLengthStr,
                 date = !string.IsNullOrEmpty(sessionInfo.gameDate) ? sessionInfo.gameDate : sessionTime.ToString("yyyy-MM-dd"),
                 time = !string.IsNullOrEmpty(sessionInfo.gameTime) ? sessionInfo.gameTime : sessionTime.ToString("HH:mm:ss"),
-                splitsPerLap = 2,
+                splitsPerLap = CalculateSplitsPerLap(raceStatsList),
                 flags = BuildHostFlags(sessionInfo.hostFlags),
                 server = sessionInfo.HName ?? "",
                 utcOffset = sessionInfo.utcOffset,
@@ -556,6 +556,12 @@ namespace LFSStatistics
             }
         }
 
+
+        private static int CalculateSplitsPerLap(List<SessionStats> raceStatsList)
+        {
+            var winner = raceStatsList.OrderBy(d => d.finalPos).First();
+            return winner.timingEvents.Where(e => e.Split > 0).Max(e => e.Split);
+        }
 
         private static Dictionary<string, List<int>> CalculatePositions(List<SessionStats> raceStatsList)
         {

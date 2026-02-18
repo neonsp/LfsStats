@@ -1,7 +1,7 @@
 ﻿// LFS Stats Viewer - Complete JavaScript Renderer
 // Reads JSON and renders all statistics
 
-const LFS_STATS_VERSION = '3.0.1';
+const LFS_STATS_VERSION = '3.0.2';
 
 let raceData = null;
 
@@ -1791,9 +1791,12 @@ function renderGraph() {
     const totalTimingPoints = drivers[0]?.positions?.length || 0;
     const totalLaps = race.laps;
     
+    // Calculate points per lap from actual data (more reliable than splitsPerLap+1)
+    const finisher = drivers.find(d => d.lapsCompleted === totalLaps);
+    const pointsPerLap = finisher ? Math.round((finisher.positions.length - 1) / finisher.lapsCompleted) : ((raceData.session.splitsPerLap || 2) + 1);
+    
     // Create X-axis labels with proper lap mapping
     const xLabels = [];
-    const pointsPerLap = (raceData.session.splitsPerLap || 2) + 1;
     
     for (let i = 0; i < totalTimingPoints; i++) {
         if (i === 0) {
@@ -1820,8 +1823,7 @@ function renderGraph() {
         
         // Truncate positions after DNF (replace with null after last completed lap)
         if (isDNF && driver.lapsCompleted > 0) {
-            const splitsPerLap = raceData.session.splitsPerLap || 2;
-            const lastValidIndex = driver.lapsCompleted * (splitsPerLap + 1);
+            const lastValidIndex = driver.lapsCompleted * pointsPerLap;
             driverPositions = driverPositions.map((v, i) => i <= lastValidIndex ? v : null);
         }
         
@@ -2165,8 +2167,7 @@ function renderGraph() {
                                 currentLap = 0; // Grid/start
                             } else {
                                 // Calculate which lap we're in based on timing point index
-                                const ptsPerLap = (raceData.session.splitsPerLap || 2) + 1;
-                                currentLap = Math.ceil(timingPointIndex / ptsPerLap);
+                                currentLap = Math.ceil(timingPointIndex / pointsPerLap);
                             }
                             
                             // Collect all drivers (including DNF and lapped finishers)
