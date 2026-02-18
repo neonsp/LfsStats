@@ -162,11 +162,7 @@
       <UserProperties BuildVersion_IncrementBeforeBuild="False" BuildVersion_StartDate="2013/7/1" BuildVersion_UpdateAssemblyVersion="True" BuildVersion_BuildVersioningStyle="None.None.DeltaBaseDate.Increment" />
     </VisualStudio>
   </ProjectExtensions>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
+  <Target Name="StampViewerVersion" AfterTargets="Build">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)stamp_version.ps1&quot; -ProjectDir &quot;$(ProjectDir)&quot;" />
   </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

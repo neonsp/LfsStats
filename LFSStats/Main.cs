@@ -21,7 +21,10 @@ namespace LFSStatistics
         {
             get { return aiDescription; }
         }
-        private static string aiVersionShort = Assembly.GetExecutingAssembly().GetName().Version.Major + "." + Assembly.GetExecutingAssembly().GetName().Version.Minor;
+        private static Version _ver = Assembly.GetExecutingAssembly().GetName().Version;
+        private static string aiVersionShort = _ver.Build > 0
+            ? _ver.Major + "." + _ver.Minor + "." + _ver.Build
+            : _ver.Major + "." + _ver.Minor;
         public static string VersionShort
         {
             get { return aiVersionShort; }

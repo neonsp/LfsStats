@@ -141,7 +141,7 @@ namespace LFSStatistics
             {
                 exportedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                 mprUrl = "",
-                logoUrl = ""
+                logoUrl = config.DefaultLogoUrl
             };
 
             // Build players array and index lookup
@@ -303,15 +303,19 @@ namespace LFSStatistics
                 {
                     var pitStop = new PitStop
                     {
-                        lap = pit.LapsDone,
+                        lap = pit.LapsDone + 1,
                         duration = (pit.STime / 1000.0).ToString("F3"),
                         reason = new List<string>()
                     };
                     if ((pit.Work & PitWorkFlags.PSE_STOP) != 0) pitStop.reason.Add("stop");
-                    if ((pit.Work & PitWorkFlags.PSE_FR_DAM) != 0 || (pit.Work & PitWorkFlags.PSE_RE_DAM) != 0)
+                    if ((pit.Work & (PitWorkFlags.PSE_FR_DAM | PitWorkFlags.PSE_RE_DAM |
+                        PitWorkFlags.PSE_LE_FR_DAM | PitWorkFlags.PSE_RI_FR_DAM |
+                        PitWorkFlags.PSE_LE_RE_DAM | PitWorkFlags.PSE_RI_RE_DAM |
+                        PitWorkFlags.PSE_BODY_MINOR | PitWorkFlags.PSE_BODY_MAJOR)) != 0)
                         pitStop.reason.Add("damage");
-                    if ((pit.Work & PitWorkFlags.PSE_LE_FR_WHL) != 0 || (pit.Work & PitWorkFlags.PSE_LE_RE_WHL) != 0 ||
-                        (pit.Work & PitWorkFlags.PSE_RI_FR_WHL) != 0 || (pit.Work & PitWorkFlags.PSE_RI_RE_WHL) != 0)
+                    if ((pit.Work & (PitWorkFlags.PSE_FR_WHL | PitWorkFlags.PSE_RE_WHL |
+                        PitWorkFlags.PSE_LE_FR_WHL | PitWorkFlags.PSE_RI_FR_WHL |
+                        PitWorkFlags.PSE_LE_RE_WHL | PitWorkFlags.PSE_RI_RE_WHL)) != 0)
                         pitStop.reason.Add("tires");
                     if ((pit.Work & PitWorkFlags.PSE_REFUEL) != 0) pitStop.reason.Add("refuel");
                     if ((pit.Work & PitWorkFlags.PSE_SETUP) != 0) pitStop.reason.Add("setup");
@@ -369,13 +373,17 @@ namespace LFSStatistics
                 foreach (var pit in driver.pit)
                 {
                     var reasons = new List<string>();
-                    if ((pit.Work & PitWorkFlags.PSE_FR_DAM) != 0 || (pit.Work & PitWorkFlags.PSE_RE_DAM) != 0)
+                    if ((pit.Work & (PitWorkFlags.PSE_FR_DAM | PitWorkFlags.PSE_RE_DAM |
+                        PitWorkFlags.PSE_LE_FR_DAM | PitWorkFlags.PSE_RI_FR_DAM |
+                        PitWorkFlags.PSE_LE_RE_DAM | PitWorkFlags.PSE_RI_RE_DAM |
+                        PitWorkFlags.PSE_BODY_MINOR | PitWorkFlags.PSE_BODY_MAJOR)) != 0)
                         reasons.Add("damage");
-                    if ((pit.Work & PitWorkFlags.PSE_LE_FR_WHL) != 0 || (pit.Work & PitWorkFlags.PSE_LE_RE_WHL) != 0 ||
-                        (pit.Work & PitWorkFlags.PSE_RI_FR_WHL) != 0 || (pit.Work & PitWorkFlags.PSE_RI_RE_WHL) != 0)
+                    if ((pit.Work & (PitWorkFlags.PSE_FR_WHL | PitWorkFlags.PSE_RE_WHL |
+                        PitWorkFlags.PSE_LE_FR_WHL | PitWorkFlags.PSE_RI_FR_WHL |
+                        PitWorkFlags.PSE_LE_RE_WHL | PitWorkFlags.PSE_RI_RE_WHL)) != 0)
                         reasons.Add("tires");
                     if ((pit.Work & PitWorkFlags.PSE_REFUEL) != 0) reasons.Add("refuel");
-                    allPitStops.Add((playerIndex[driver.userName], pit.LapsDone, pit.STime, reasons));
+                    allPitStops.Add((playerIndex[driver.userName], pit.LapsDone + 1, pit.STime, reasons));
                 }
             }
             int pitPos = 0;

@@ -1,4 +1,4 @@
-# LFS Stats v3.0
+# LFS Stats v3.0.1
 
 **Generador de estadísticas y visor interactivo para [Live for Speed](https://www.lfs.net/).**
 
@@ -215,6 +215,7 @@ Abre `stats_viewer.html` directamente en tu navegador. Aparecerá una zona de ar
 | `askForFileNameOnRST` | `false` | Preguntar nombre de archivo al exportar |
 | `exportOnSTAte` | `no` | Exportar al cambiar estado (interrupción): `yes`, `no`, o `ask` |
 | `askForFileNameOnSTA` | `false` | Preguntar nombre de archivo al cambiar estado |
+| `defaultLogoUrl` | *(vacío)* | URL del logo por defecto escrito en `metadata.logoUrl` en cada exportación JSON |
 | `pubStatIDkey` | *(vacío)* | Clave API PubStat de LFS World para récords mundiales |
 
 ### Opciones de Línea de Comandos

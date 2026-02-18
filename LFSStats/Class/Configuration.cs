@@ -72,6 +72,11 @@ namespace LFSStatistics
         private string pubStatIDkey;
         public string PubStatIDkey { get { return pubStatIDkey; } private set { pubStatIDkey = value; } }
 
+        private const string _defaultLogoUrl = "defaultLogoUrl";
+        private const string defDefaultLogoUrl = "";
+        private string defaultLogoUrl;
+        public string DefaultLogoUrl { get { return defaultLogoUrl; } private set { defaultLogoUrl = value; } }
+
         public Configuration(string configFilePath)
         {
             // Even if LoadFromFile returns empty dictionary after an error, constructor should set all parameters to default.
@@ -178,6 +183,8 @@ namespace LFSStatistics
             }
             // PubStat ID key
             if (!config.TryGetValue(_pubStatIDkey, out pubStatIDkey)) pubStatIDkey = defPubStatIDkey;
+            // Default logo URL for JSON export
+            if (!config.TryGetValue(_defaultLogoUrl, out defaultLogoUrl)) defaultLogoUrl = defDefaultLogoUrl;
         }
 
         /// <summary>

@@ -1,7 +1,7 @@
-// LFS Stats Viewer - Complete JavaScript Renderer
+﻿// LFS Stats Viewer - Complete JavaScript Renderer
 // Reads JSON and renders all statistics
 
-const LFS_STATS_VERSION = '3.0';
+const LFS_STATS_VERSION = '3.0.1';
 
 let raceData = null;
 
@@ -329,7 +329,7 @@ function renderHeader() {
     // MPR download link
     let mprLink = '';
     if (raceData.metadata.mprUrl && raceData.metadata.mprUrl.trim() !== '') {
-        mprLink = ` | <a href="${raceData.metadata.mprUrl}" class="mpr-download" download>📥 ${t('downloadReplay')}</a>`;
+        mprLink = ` | <a href="${raceData.metadata.mprUrl}" class="mpr-download" target="_blank" rel="noopener">📥 ${t('downloadReplay')}</a>`;
     }
     
     // Host flags badges
@@ -387,7 +387,7 @@ function renderHeader() {
     cards.push(`<span class="info-card">🏎️ ${raceData.cars.length} ${t('drivers')}</span>`);
     if (race.wind) cards.push(`<span class="info-card">💨 ${translateWeather(race.wind)}</span>`);
     if (raceData.metadata.mprUrl && raceData.metadata.mprUrl.trim() !== '') {
-        cards.push(`<span class="info-card"><a href="${raceData.metadata.mprUrl}" class="mpr-download" download>📥 ${t('downloadReplay')}</a></span>`);
+        cards.push(`<span class="info-card"><a href="${raceData.metadata.mprUrl}" class="mpr-download" target="_blank" rel="noopener">📥 ${t('downloadReplay')}</a></span>`);
     }
     infoCards = `<div class="info-cards">${cards.join('')}</div>`;
     
@@ -1793,19 +1793,20 @@ function renderGraph() {
     
     // Create X-axis labels with proper lap mapping
     const xLabels = [];
+    const pointsPerLap = (raceData.session.splitsPerLap || 2) + 1;
     
     for (let i = 0; i < totalTimingPoints; i++) {
         if (i === 0) {
             xLabels.push(t('startLabel'));
-        } else if (i % 2 === 0) {
-            const nextLap = (i / 2) + 1;
-            if (i === totalTimingPoints - 1 && nextLap > totalLaps) {
-                xLabels.push(t('finishLabel'));
-            } else if (nextLap <= totalLaps) {
-                xLabels.push(t('lapLabel') + nextLap);
+        } else if (i % pointsPerLap === 0) {
+            const lap = i / pointsPerLap;
+            if (lap <= totalLaps) {
+                xLabels.push(t('lapLabel') + lap);
             } else {
                 xLabels.push('');
             }
+        } else if (i === totalTimingPoints - 1) {
+            xLabels.push(t('finishLabel'));
         } else {
             xLabels.push('');
         }
@@ -2164,8 +2165,8 @@ function renderGraph() {
                                 currentLap = 0; // Grid/start
                             } else {
                                 // Calculate which lap we're in based on timing point index
-                                // Lap completes at even indices: i=2 (lap 1), i=4 (lap 2), etc.
-                                currentLap = Math.floor((timingPointIndex + 1) / 2);
+                                const ptsPerLap = (raceData.session.splitsPerLap || 2) + 1;
+                                currentLap = Math.ceil(timingPointIndex / ptsPerLap);
                             }
                             
                             // Collect all drivers (including DNF and lapped finishers)
@@ -3519,24 +3520,47 @@ function renderBestTimes() {
                         <tr>
                             <th>${t("rank")}</th>
                             <th>${t("driver")}</th>
-                            <th>Lap</th>
-                            <th>${t("duration")}</th>
-                            <th>${t("actions")}</th>
+                            <th>${t("pitStops")}</th>
+                            <th>${t("totalTime")}</th>
+                            <th>${t("details")}</th>
                         </tr>
                     </thead>
                     <tbody id="pit-stops-tbody">
-                        ${(raceData.rankings.pitStops || []).map((p, i) => `
+                        ${buildPitStopsByDriver().map((p, i) => `
                             <tr class="${i >= 10 ? 'expandable-row hidden' : ''}">
                                 <td class="position pos-${i + 1}">${i + 1}</td>
-                                <td>${getDriverLinkByIndex(p.driver)}</td>
-                                <td>${t('lapHeader')} ${p.lap}</td>
-                                <td>${p.duration}s</td>
-                                <td>${formatPitStopActions(p.reason)}</td>
+                                <td>${getDriverLinkByIndex(p.driverIdx)}</td>
+                                <td>${p.count}</td>
+                                <td>${formatLapTime(p.totalTime)}</td>
+                                <td>${p.count === 1 ? `
+                                    ${t('lapHeader')} ${p.stops[0].lap} — ${formatPitStopActions(p.stops[0].reason)}
+                                ` : `
+                                    <span class="pit-details-toggle" onclick="togglePitDetails(this)" style="cursor:pointer;color:#4fc3f7;float:right;">
+                                        <span class="arrow">▶</span> ${t("details")}
+                                    </span>
+                                    <div class="pit-details" style="display:none;margin-top:6px;">
+                                        <div style="margin-bottom:6px;"><span class="position pos-${i + 1}" style="margin-right:6px;">${i + 1}</span> ${getDriverLinkByIndex(p.driverIdx)} — ${p.count} ${t('pitStops').toLowerCase()} — ${formatLapTime(p.totalTime)}</div>
+                                        <table class="compact-table" style="margin:0;font-size:0.85em;">
+                                            <thead><tr><th>${t("driver")}</th><th>#</th><th>${t("lapHeader")}</th><th>${t("duration")}</th><th>${t("actions")}</th></tr></thead>
+                                            <tbody>
+                                                ${p.stops.map((s, j) => `
+                                                    <tr>
+                                                        <td>${getPitStopDriverName(p.driverIdx, s.lap)}</td>
+                                                        <td>${j + 1}</td>
+                                                        <td>${t('lapHeader')} ${s.lap}</td>
+                                                        <td>${formatLapTime(s.duration)}</td>
+                                                        <td>${formatPitStopActions(s.reason)}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                `}</td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
-                ${(raceData.rankings.pitStops || []).length > 10 ? `<button class="show-more-btn" onclick="toggleExpandTable('pit-stops-tbody', this)">${t("seeMore")} (+${(raceData.rankings.pitStops || []).length - 10})</button>` : ''}
+                ${buildPitStopsByDriver().length > 10 ? `<button class="show-more-btn" onclick="toggleExpandTable('pit-stops-tbody', this)">${t("seeMore")} (+${buildPitStopsByDriver().length - 10})</button>` : ''}
             </div>
             
             <div class="section-box">
@@ -5014,6 +5038,54 @@ function formatTimeDiff(seconds) {
     const min = Math.floor(seconds / 60);
     const sec = (seconds % 60).toFixed(3);
     return min > 0 ? `${min}:${sec.padStart(6, '0')}` : sec;
+}
+
+function getPitStopDriverName(carDriverIdx, lap) {
+    const car = raceData.cars.find(c => c.lastDriver === carDriverIdx);
+    if (!car || !car.stints || car.stints.length <= 1) return getSingleDriverLink(carDriverIdx);
+    for (let i = car.stints.length - 1; i >= 0; i--) {
+        if (lap >= car.stints[i].fromLap) return getSingleDriverLink(car.stints[i].driver);
+    }
+    return getSingleDriverLink(carDriverIdx);
+}
+
+function getSingleDriverLink(playerIdx) {
+    const p = raceData.getPlayer(playerIdx);
+    if (!p) return '?';
+    const coloredName = p.nameColored ? parseLFSColors(p.nameColored) : escapeHtml(p.name);
+    return `<a href="https://www.lfsworld.net/?win=stats&racer=${encodeURIComponent(p.username)}" target="_blank" class="link-driver">${coloredName}</a>`;
+}
+
+function togglePitDetails(el) {
+    const details = el.nextElementSibling;
+    const isHidden = details.style.display === 'none';
+    details.style.display = isHidden ? 'block' : 'none';
+    el.querySelector('.arrow').classList.toggle('open');
+    const tr = el.closest('tr');
+    const detailsTd = el.closest('td');
+    const otherCells = Array.from(tr.children).filter(td => td !== detailsTd);
+    if (isHidden) {
+        otherCells.forEach(td => td.style.display = 'none');
+        detailsTd.colSpan = otherCells.length + 1;
+    } else {
+        otherCells.forEach(td => td.style.display = '');
+        detailsTd.colSpan = 1;
+    }
+}
+
+function buildPitStopsByDriver() {
+    const driverPits = {};
+    raceData.cars.forEach(car => {
+        if (!car.pitStops || car.pitStops.length === 0) return;
+        const driverIdx = car.lastDriver;
+        const stops = car.pitStops.map(p => {
+            const durSec = parseFloat((p.duration || '0').replace(',', '.'));
+            return { lap: p.lap, duration: durSec, reason: p.reason || [] };
+        });
+        const totalTime = stops.reduce((sum, s) => sum + s.duration, 0);
+        driverPits[driverIdx] = { driverIdx, count: stops.length, totalTime, stops };
+    });
+    return Object.values(driverPits).sort((a, b) => a.totalTime - b.totalTime);
 }
 
 function formatPitStopActions(reasons) {

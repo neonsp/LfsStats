@@ -612,7 +612,6 @@ tr:last-child td {
 }
 
 /* Hidden rows */
-.expandable-row.hidden {
     display: none;
 }
 
@@ -1190,4 +1189,27 @@ thead .heatmap-driver {
 #file-drop-zone p {
     margin: 4px 0;
     color: #ccc;
+}
+
+/* Pit stop details toggle */
+.pit-details-toggle .arrow {
+    display: inline-block;
+    transition: transform 0.2s;
+    font-size: 0.8em;
+}
+.pit-details-toggle .arrow.open {
+    transform: rotate(90deg);
+}
+.pit-details .compact-table {
+    background: rgba(0,0,0,0.2);
+}
+
+}
+
+.pit-details.hidden {
+    display: none;
+}
+
+.hidden {
+    display: none;
 }
