@@ -612,6 +612,7 @@ tr:last-child td {
 }
 
 /* Hidden rows */
+.hidden-row {
     display: none;
 }
 
