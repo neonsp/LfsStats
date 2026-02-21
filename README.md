@@ -1,4 +1,4 @@
-# LFS Stats v3.0.2
+# LFS Stats v3.1.1
 
 **Statistics generator and interactive viewer for [Live for Speed](https://www.lfs.net/).**
 
@@ -18,6 +18,7 @@ LFS Stats connects to a Live for Speed server (or replay) via InSim, captures ra
   - [Interactive Graphs](#interactive-graphs)
   - [Driver Comparator](#driver-comparator)
   - [Session Support](#session-support)
+  - [Dark / Light Theme](#dark--light-theme)
   - [Internationalization](#internationalization)
 - [Stats Viewer Deployment](#stats-viewer-deployment)
   - [Web Server](#deploying-on-a-web-server)
@@ -150,6 +151,10 @@ Select 2-5 drivers to compare:
 | **Qualifying** | Temporal position graph, best lap evolution, session time limit zone |
 | **Practice** | Basic lap time analysis |
 
+### Dark / Light Theme
+
+Toggle between dark and light themes with the 🌙/☀️ button (top-right corner). The preference is saved in `localStorage` and applied instantly — including all Chart.js graphs. LFS color codes (`^0`–`^9`) are rendered with per-theme contrast adjustments.
+
 ### Internationalization
 
 The viewer auto-detects browser language with 16 supported languages:
@@ -215,6 +220,7 @@ Open `stats_viewer.html` directly in your browser. A drag & drop zone will appea
 | `askForFileNameOnRST` | `false` | Prompt for filename on export |
 | `exportOnSTAte` | `no` | Export on state change (interruption): `yes`, `no`, or `ask` |
 | `askForFileNameOnSTA` | `false` | Prompt for filename on state change |
+| `preserveLapsOnPit` | `true` | Keep lap data when a driver ESC-pits and rejoins |
 | `defaultLogoUrl` | *(empty)* | Default logo URL written to `metadata.logoUrl` in every JSON export |
 | `pubStatIDkey` | *(empty)* | LFS World PubStat API key for world records |
 

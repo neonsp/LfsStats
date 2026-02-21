@@ -1,9 +1,57 @@
 ﻿// LFS Stats Viewer - Complete JavaScript Renderer
 // Reads JSON and renders all statistics
 
-const LFS_STATS_VERSION = '3.0.2';
+const LFS_STATS_VERSION = '3.1.1';
 
 let raceData = null;
+
+// ─── Theme helpers ────────────────────────────────────────────────────────────
+
+/**
+ * Returns chart color tokens for the current theme.
+ * Call at chart creation time so colors match whatever theme is active.
+ */
+function getChartColors() {
+    const isLight = document.documentElement.dataset.theme === 'light';
+    return {
+        gridColor:       isLight ? '#e0e0e0' : '#2a2a2a',
+        gridColorAlt:    isLight ? '#cccccc' : '#444444',
+        gridColorZero:   isLight ? '#aaaaaa' : '#666666',
+        tickColor:       isLight ? '#555555' : '#888888',
+        legendColor:     isLight ? '#333333' : '#ffffff',
+        axisLabelColor:  isLight ? '#444444' : '#ffffff',
+        lapEmptyBg:      isLight ? '#e8e8e8' : '#333333',
+        chartTitleColor: isLight ? '#1a1a1a' : '#FFD700',
+    };
+}
+
+/**
+ * Re-render all charts with updated theme colors.
+ * Called after toggling the theme so charts reflect the new palette.
+ */
+function applyChartTheme() {
+    if (!raceData) return;
+    // Destroy & rebuild charts so colors are freshly read from getChartColors()
+    if (positionChartInstance) {
+        positionChartInstance.destroy();
+        positionChartInstance = null;
+    }
+    if (progressChartInstance) {
+        progressChartInstance.destroy();
+        progressChartInstance = null;
+    }
+    if (typeof compareChart !== 'undefined' && compareChart) {
+        compareChart.destroy();
+        compareChart = null;
+    }
+    renderGraph();
+    renderProgressGraph();
+    // Re-render compare chart if drivers are selected
+    const compareResult = document.querySelector('#compare .compare-table-wrap, #compare canvas');
+    if (compareResult) renderCompare();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 // LFS Track names
 // Parse LFS color codes to HTML
@@ -11,24 +59,24 @@ function parseLFSColors(text) {
     if (!text) return '';
     
     const colorMap = {
-        '^0': '#000000', '^1': '#FF0000', '^2': '#00FF00', '^3': '#FFFF00',
-        '^4': '#0000FF', '^5': '#00FFFF', '^6': '#FF00FF', '^7': '#FFFFFF',
-        '^8': '#666666', '^9': '#888888'
+        '^0': 'lfs-c0', '^1': 'lfs-c1', '^2': 'lfs-c2', '^3': 'lfs-c3',
+        '^4': 'lfs-c4', '^5': 'lfs-c5', '^6': 'lfs-c6', '^7': 'lfs-c7',
+        '^8': 'lfs-c8', '^9': 'lfs-c9'
     };
     
     let html = '';
-    let currentColor = '#FFFFFF';
+    let currentClass = 'lfs-c7';
     let i = 0;
     
     while (i < text.length) {
         if (text[i] === '^' && i + 1 < text.length && /[0-9]/.test(text[i + 1])) {
             const code = text.substring(i, i + 2);
             if (colorMap[code]) {
-                currentColor = colorMap[code];
+                currentClass = colorMap[code];
             }
             i += 2;
         } else {
-            html += `<span style="color: ${currentColor};">${escapeHtml(text[i])}</span>`;
+            html += `<span class="lfs-name ${currentClass}">${escapeHtml(text[i])}</span>`;
             i++;
         }
     }
@@ -55,6 +103,31 @@ window.addEventListener('DOMContentLoaded', () => {
     setupGraphLegend();
     setupProgressLegend();
     setupGraphControls();
+
+    // ── Theme toggle ──────────────────────────────────────────────────────────
+    const toggleBtn = document.getElementById('theme-toggle');
+    if (toggleBtn) {
+        // Sync button icon with current theme on load
+        const syncToggleIcon = () => {
+            const isLight = document.documentElement.dataset.theme === 'light';
+            toggleBtn.textContent = isLight ? '☀️' : '🌙';
+        };
+        syncToggleIcon();
+
+        toggleBtn.addEventListener('click', () => {
+            const isLight = document.documentElement.dataset.theme === 'light';
+            if (isLight) {
+                delete document.documentElement.dataset.theme;
+                localStorage.removeItem('lfs-stats-theme');
+            } else {
+                document.documentElement.dataset.theme = 'light';
+                localStorage.setItem('lfs-stats-theme', 'light');
+            }
+            syncToggleIcon();
+            applyChartTheme();
+        });
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 });
 
 // Load race data from JSON
@@ -105,8 +178,8 @@ function showFilePicker() {
             <div class="drop-icon">📂</div>
             <h2>LFS Stats Viewer</h2>
             <p>${t('dropJsonHere') || 'Drag & drop a JSON file here'}</p>
-            <p style="color:#888;font-size:0.85em;">${t('orClickToSelect') || 'or click to select a file'}</p>
-            <input type="file" id="file-input" accept=".json" style="display:none;">
+            <p class="file-picker-hint">${t('orClickToSelect') || 'or click to select a file'}</p>
+            <input type="file" id="file-input" accept=".json" class="hidden">
         </div>
     `;
 
@@ -357,7 +430,7 @@ function renderHeader() {
     
     // Server name
     const serverName = race.server && race.server.trim() ? race.server : '';
-    const serverHtml = serverName ? `<div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:1px;text-transform:uppercase;margin-top:2px;">${serverName}</div>` : '';
+    const serverHtml = serverName ? `<div class="server-name-label">${parseLFSColors(serverName)}</div>` : '';
     
     // Custom logo from metadata
     const customLogoUrl = raceData.metadata.logoUrl || '';
@@ -483,16 +556,14 @@ function renderSummaryCard() {
     // Most laps completed
     const maxLaps = Math.max(...cars.map(c => c.lapsCompleted));
 
-    // Build cards
+    // Build cards (no links in summary - just colored names)
     const driverLink = (car) => {
         if (!car) return '-';
-        const colored = car.nameColored ? parseLFSColors(car.nameColored) : escapeHtml(car.name);
-        return `<a href="https://www.lfsworld.net/?win=stats&player=${encodeURIComponent(car.username)}" target="_blank" class="link-driver" title="${escapeHtml(car.username)}">${colored}</a>`;
+        return car.nameColored ? parseLFSColors(car.nameColored) : escapeHtml(car.name);
     };
     const playerLink = (playerIdx) => {
         const p = raceData.getPlayer(playerIdx);
-        const colored = p.nameColored ? parseLFSColors(p.nameColored) : escapeHtml(p.name);
-        return `<a href="https://www.lfsworld.net/?win=stats&player=${encodeURIComponent(p.username)}" target="_blank" class="link-driver" title="${escapeHtml(p.username)}">${colored}</a>`;
+        return p.nameColored ? parseLFSColors(p.nameColored) : escapeHtml(p.name);
     };
 
     let cards = '';
@@ -502,7 +573,7 @@ function renderSummaryCard() {
     cards += `<div class="summary-stat" ${sc('results')}>
         <span class="stat-icon">${isQual ? '🏎️' : '🏆'}</span>
         <span class="stat-value">${driverLink(winnerCar)}</span>
-        <span class="stat-label">${isQual ? t('pole') || 'Pole' : t('winner') || 'Winner'}</span>
+        <span class="stat-label">${isQual ? t('pole') : t('winner')}</span>
     </div>`;
 
     // 2. Fastest lap
@@ -551,7 +622,7 @@ function renderSummaryCard() {
         cards += `<div class="summary-stat" ${sc('overview')}>
             <span class="stat-icon">⚔️</span>
             <span class="stat-value">${totalOvertakes}</span>
-            <span class="stat-label">${t('overtakes') || 'Overtakes'}</span>
+            <span class="stat-label">${t('overtakes')}</span>
         </div>`;
     }
 
@@ -609,7 +680,6 @@ function renderResults() {
             <thead>
                 <tr>
                     <th>${t('pos')}</th>
-                    ${!isQual ? `<th>${t('grid')}</th>` : ''}
                     <th>${t('driver')}</th>
                     <th>${t('car')}</th>
                     ${!isQual ? `<th>${t('status')}</th>` : ''}
@@ -618,6 +688,7 @@ function renderResults() {
                     <th>${t('bestLap')}</th>
                     <th>${t('pitStops')}</th>
                     <th>${t('incidents')}</th>
+                    ${!isQual ? `<th>${t('grid')}</th>` : ''}
                 </tr>
             </thead>
             <tbody>
@@ -639,18 +710,24 @@ function renderResults() {
                     // Build driver link to LFSWorld
                     const driverLink = getDriverLink(d);
                     
+                    const bestParsed = parseLapTime(d.bestLapTime);
+                    const isFastest = bestParsed < 3599 && Math.abs(bestParsed - fastestLapTime) < 0.001;
+                    const hasValidBest = bestParsed < 3599;
+                    const driverWR = hasValidBest && raceData.worldRecords ? raceData.worldRecords[d.car] : null;
+                    const wrGapStr = driverWR ? formatWRGap(bestParsed - parseLapTime(driverWR.lapTime)) : '';
+
                     return `
                         <tr>
                             <td class="position pos-${displayPos}">${displayPos}</td>
-                            ${!isQual ? `<td>${d.gridPosition}</td>` : ''}
                             <td>${driverLink}</td>
                             <td>${carHtml}</td>
                             ${!isQual ? `<td class="status-${d.status}">${translateStatus(d.status)}</td>` : ''}
                             <td>${d.lapsCompleted}</td>
                             ${!isQual ? `<td>${d.totalTime}</td>` : ''}
-                            <td${parseLapTime(d.bestLapTime) < 3599 && Math.abs(parseLapTime(d.bestLapTime) - fastestLapTime) < 0.001 ? ' style="color: #A855F7; font-weight: bold;"' : ''}>${parseLapTime(d.bestLapTime) < 3599 ? d.bestLapTime : '-'}${parseLapTime(d.bestLapTime) < 3599 && d.bestLapNumber != null ? ` <small>(${t('lapLabel')}${d.bestLapNumber})</small>` : ''}${parseLapTime(d.bestLapTime) < 3599 && Math.abs(parseLapTime(d.bestLapTime) - fastestLapTime) < 0.001 ? ' ★' : ''}</td>
+                            <td${isFastest ? ' style="color: #A855F7; font-weight: bold;"' : ''}>${hasValidBest ? d.bestLapTime : '-'}${hasValidBest && d.bestLapNumber != null ? ` <small>(${t('lapLabel')}${d.bestLapNumber})</small>` : ''}${isFastest ? ' ★' : ''}${wrGapStr ? `<br><span class="wr-gap">WR ${wrGapStr}</span>` : ''}</td>
                             <td>${d.pitStops.length}</td>
                             <td>${incidentsStr}</td>
+                            ${!isQual ? `<td>${d.gridPosition}</td>` : ''}
                         </tr>
                     `;
                 }).join('')}
@@ -675,10 +752,10 @@ function renderOverview() {
                 <table class="compact-table">
                     <thead>
                         <tr>
-                            <th>Grid</th>
+                            <th>${t("grid")}</th>
                             <th>${t("driver")}</th>
-                            <th>Final Pos</th>
-                            <th>Change</th>
+                            <th>${t("finalPos")}</th>
+                            <th>${t("change")}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -759,7 +836,7 @@ function renderOverview() {
                 <table class="compact-table">
                     <thead>
                         <tr>
-                            <th>${t("driver")}</th>
+                            <th class="text-left">${t("driver")}</th>
                             <th>${t('lapsLed')}</th>
                             <th>${t("percentage")}</th>
                         </tr>
@@ -767,7 +844,7 @@ function renderOverview() {
                     <tbody>
                         ${lapsLed.map(l => `
                             <tr>
-                                <td>${getDriverLinkFromLapLed(l)}</td>
+                                <td class="text-left">${getDriverLinkFromLapLed(l)}</td>
                                 <td>${l.laps}</td>
                                 <td>${l.percentage.toFixed(1)}%</td>
                             </tr>
@@ -820,7 +897,7 @@ function renderStints() {
         const totalLaps = d.lapsCompleted;
         if (totalLaps > 0) {
             const stintColors = ['#9333ea', '#f59e0b', '#22c55e', '#06b6d4', '#ec4899', '#84cc16', '#14b8a6', '#f472b6'];
-            html += `<div class="stint-bar" style="display:flex;height:24px;border-radius:4px;overflow:hidden;margin-bottom:12px;">`;
+            html += `<div class="stint-bar">`;
             let colorIdx = 0;
             const colorMap = {};
             d.stints.forEach(stint => {
@@ -848,7 +925,7 @@ function renderStints() {
         html += `</tbody></table>`;
         
         // Driver summary
-        html += `<h4 style="margin-top:12px;">${t('totalLaps')}</h4>`;
+        html += `<h4 class="driver-summary-heading">${t('totalLaps')}</h4>`;
         html += `<table><thead><tr><th>${t('stintDriver')}</th><th>${t('stintLaps')}</th><th>%</th></tr></thead><tbody>`;
         driverOrder.forEach(username => {
             const info = driverSummary[username];
@@ -915,10 +992,11 @@ function renderLapByLap() {
     ];
     
     function getLapColor(lapTime, lapNumber) {
-        if (!lapTime || lapTime === '-') return '#333';
+        const emptyBg = getChartColors().lapEmptyBg;
+        if (!lapTime || lapTime === '-') return emptyBg;
         
         const parsed = parseLapTime(lapTime);
-        if (parsed === Infinity) return '#333';
+        if (parsed === Infinity) return emptyBg;
         
         // First lap uses best first lap as reference
         const referenceTime = lapNumber === 1 ? bestFirstLap : bestLapTime;
@@ -1334,6 +1412,7 @@ function renderQualifyingGraph(canvas, sortedDrivers, baseColors, race) {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
     
+    const cc = getChartColors();
     positionChartInstance = new Chart(canvas, {
         type: 'line',
         data: { datasets },
@@ -1350,7 +1429,7 @@ function renderQualifyingGraph(canvas, sortedDrivers, baseColors, race) {
                 title: {
                     display: true,
                     text: [t('qualPositionGraph'), `${race.track} - ${race.sessionTime > 0 ? race.sessionTime + ' min' : race.sessionLength}`],
-                    color: '#FFD700',
+                    color: cc.chartTitleColor,
                     font: { size: 20, weight: 'bold' }
                 },
                 legend: {
@@ -1359,7 +1438,7 @@ function renderQualifyingGraph(canvas, sortedDrivers, baseColors, race) {
                     align: 'start',
                     maxHeight: 600,
                     labels: {
-                        color: '#fff',
+                        color: cc.legendColor,
                         usePointStyle: true,
                         padding: 12,
                         font: { size: 9 },
@@ -1379,7 +1458,7 @@ function renderQualifyingGraph(canvas, sortedDrivers, baseColors, race) {
                                     lineWidth: dataset.borderWidth,
                                     hidden: meta.hidden,
                                     datasetIndex: i,
-                                    fontColor: '#FFFFFF'
+                                    fontColor: cc.legendColor
                                 };
                             });
                             return [...spacers, ...driverLabels];
@@ -1461,7 +1540,7 @@ function renderQualifyingGraph(canvas, sortedDrivers, baseColors, race) {
                             prevRanked.forEach(([username, _], idx) => { prevPositions[username] = idx + 1; });
                             
                             // Build HTML
-                            let html = `<div style="font-weight:bold;font-size:13px;margin-bottom:8px;color:#FFD700;">⏱ ${formatSessionTime(hoveredTime)}</div>`;
+                            let html = `<div class="tooltip-header-gold">⏱ ${formatSessionTime(hoveredTime)}</div>`;
                             
                             ranked.forEach(entry => {
                                 const driver = drivers.find(d => d.username === entry.username);
@@ -1473,16 +1552,16 @@ function renderQualifyingGraph(canvas, sortedDrivers, baseColors, race) {
                                 
                                 // Position change arrow
                                 const prev = prevPositions[entry.username];
-                                let arrow = '<span style="min-width:16px;display:inline-block;"></span>';
+                                let arrow = '<span class="tooltip-arrow-neutral"></span>';
                                 if (prev !== undefined && prev !== entry.position) {
                                     if (entry.position < prev) {
-                                        arrow = `<span style="color:#00FF00;min-width:16px;display:inline-block;">▲</span>`;
+                                        arrow = `<span class="tooltip-arrow-up">▲</span>`;
                                     } else {
-                                        arrow = `<span style="color:#FF4444;min-width:16px;display:inline-block;">▼</span>`;
+                                        arrow = `<span class="tooltip-arrow-down">▼</span>`;
                                     }
                                 }
                                 
-                                html += `<div style="display:flex;gap:6px;align-items:center;margin:3px 0;">`;
+                                html += `<div class="tooltip-row">`;
                                 // Check if driver is in pit around this time
                                 let isInPit = false;
                                 if (driver.pitStops && driver.lapETimes) {
@@ -1491,14 +1570,14 @@ function renderQualifyingGraph(canvas, sortedDrivers, baseColors, race) {
                                         return pitTime !== null && Math.abs(pitTime - hoveredTime) < 30;
                                     });
                                 }
-                                const pitIcon = isInPit ? '<span style="min-width:18px;display:inline-block;text-align:center;">🔧</span>' : '<span style="min-width:18px;display:inline-block;"></span>';
+                                const pitIcon = isInPit ? '<span class="tooltip-pit-icon">🔧</span>' : '<span class="tooltip-pit-empty"></span>';
                                 
-                                html += `<span style="display:inline-block;width:12px;height:12px;background:${color};border-radius:2px;flex-shrink:0;"></span>`;
-                                html += `<span style="color:#888;min-width:28px;">P${entry.position}</span>`;
+                                html += `<span class="tooltip-color-swatch" style="background:${color};"></span>`;
+                                html += `<span class="tooltip-pos-text">P${entry.position}</span>`;
                                 html += arrow;
                                 html += pitIcon;
-                                html += `<span style="flex:1;">${coloredName}</span>`;
-                                html += `<span style="color:#AAA;font-size:10px;min-width:60px;text-align:right;">${bestStr}</span>`;
+                                html += `<span class="tooltip-driver-name">${coloredName}</span>`;
+                                html += `<span class="tooltip-gap-text">${bestStr}</span>`;
                                 html += `</div>`;
                             });
                             
@@ -1555,18 +1634,18 @@ function renderQualifyingGraph(canvas, sortedDrivers, baseColors, race) {
                     title: {
                         display: true,
                         text: t('time'),
-                        color: '#FFD700',
+                        color: cc.chartTitleColor,
                         font: { size: 14, weight: 'bold' }
                     },
                     ticks: {
-                        color: '#888',
+                        color: cc.tickColor,
                         font: { size: 11 },
                         callback: function(value) {
                             return formatSessionTime(value);
                         },
                         stepSize: 60
                     },
-                    grid: { color: '#2a2a2a', lineWidth: 0.5 }
+                    grid: { color: cc.gridColor, lineWidth: 0.5 }
                 },
                 y: {
                     reverse: true,
@@ -1575,15 +1654,15 @@ function renderQualifyingGraph(canvas, sortedDrivers, baseColors, race) {
                     title: {
                         display: true,
                         text: t('positionAxis'),
-                        color: '#FFD700',
+                        color: cc.chartTitleColor,
                         font: { size: 14, weight: 'bold' }
                     },
                     ticks: {
                         stepSize: 1,
-                        color: '#888',
+                        color: cc.tickColor,
                         font: { size: 11 }
                     },
-                    grid: { color: '#2a2a2a', lineWidth: 0.5 }
+                    grid: { color: cc.gridColor, lineWidth: 0.5 }
                 }
             }
         }
@@ -2043,6 +2122,7 @@ function renderGraph() {
     };
     
     // Create Chart.js chart
+    const cc = getChartColors();
     positionChartInstance = new Chart(canvas, {
         type: 'line',
         data: {
@@ -2063,7 +2143,7 @@ function renderGraph() {
                 title: {
                     display: true,
                     text: [isQualSession ? t('qualPositionGraph') : t('racePositionGraph'), `${race.track} - ${race.laps} ${t('laps')}`],
-                    color: '#FFD700',
+                    color: cc.chartTitleColor,
                     font: {
                         size: 20,
                         weight: 'bold'
@@ -2075,7 +2155,7 @@ function renderGraph() {
                     align: 'start',
                     maxHeight: 600,
                     labels: {
-                        color: '#fff',
+                        color: cc.legendColor,
                         usePointStyle: true,
                         padding: 12,
                         font: {
@@ -2103,7 +2183,7 @@ function renderGraph() {
                                     lineDash: dataset.borderDash,
                                     hidden: meta.hidden, // Use actual hidden state
                                     datasetIndex: i,
-                                    fontColor: '#FFFFFF' // White text for better contrast
+                                    fontColor: cc.legendColor
                                 };
                             });
                             
@@ -2242,7 +2322,7 @@ function renderGraph() {
                             });
                             
                             // Build HTML
-                            let innerHtml = '<div style="font-weight:bold;font-size:13px;margin-bottom:8px;color:#FFFFFF;">';
+                            let innerHtml = '<div class="tooltip-header-white">';
                             innerHtml += `${t('timingPoint')}: ${label}`;
                             innerHtml += '</div>';
                             
@@ -2250,7 +2330,7 @@ function renderGraph() {
                             driversAtPoint.forEach((driver) => {
                                 // Add separator line before first DNF
                                 if (driver.isDNF && !dnfSeparatorAdded) {
-                                    innerHtml += `<div style="border-top:1px solid #444;margin:8px 0 4px 0;"></div>`;
+                                    innerHtml += `<div class="tooltip-separator"></div>`;
                                     dnfSeparatorAdded = true;
                                 }
                                 
@@ -2258,17 +2338,17 @@ function renderGraph() {
                                 const coloredName = driver.nameColored ? parseLFSColors(driver.nameColored) : driver.name;
                                 
                                 // Position change arrow
-                                let arrow = '<span style="min-width:16px;display:inline-block;"></span>';
+                                let arrow = '<span class="tooltip-arrow-neutral"></span>';
                                 if (!driver.isDNF && driver.prevPosition !== null && driver.prevPosition !== driver.position) {
                                     if (driver.position < driver.prevPosition) {
-                                        arrow = `<span style="color:#00FF00;min-width:16px;display:inline-block;">▲</span>`;
+                                        arrow = `<span class="tooltip-arrow-up">▲</span>`;
                                     } else {
-                                        arrow = `<span style="color:#FF4444;min-width:16px;display:inline-block;">▼</span>`;
+                                        arrow = `<span class="tooltip-arrow-down">▼</span>`;
                                     }
                                 }
                                 
                                 // Pit stop icon if currently in pit
-                                const pitIcon = driver.isInPit ? '<span style="min-width:18px;display:inline-block;text-align:center;">🔧</span>' : '<span style="min-width:18px;display:inline-block;"></span>';
+                                const pitIcon = driver.isInPit ? '<span class="tooltip-pit-icon">🔧</span>' : '<span class="tooltip-pit-empty"></span>';
                                 
                                 // Pit stops count text
                                 const pitText = driver.pitStops > 0 ? ` (${driver.pitStops} ${driver.pitStops > 1 ? t('pits') : t('pit')})` : '';
@@ -2279,15 +2359,15 @@ function renderGraph() {
                                 
                                 // Current stint driver (for relay races)
                                 const stintDriver = (driver.driverData.stints && driver.driverData.stints.length > 1) ? getStintDriverAtLap(driver.driverData, currentLap) : null;
-                                const stintHtml = stintDriver ? `<span style="color:#AAA;font-size:10px;"> [${stintDriver.name}]</span>` : '';
+                                const stintHtml = stintDriver ? `<span class="tooltip-stint-driver"> [${stintDriver.name}]</span>` : '';
                                 
-                                innerHtml += `<div style="display:flex;gap:6px;align-items:center;margin:4px 0;">`;
-                                innerHtml += `<span style="display:inline-block;width:12px;height:12px;background:${driver.color};border-radius:2px;flex-shrink:0;"></span>`;
+                                innerHtml += `<div class="tooltip-row-lg">`;
+                                innerHtml += `<span class="tooltip-color-swatch" style="background:${driver.color};"></span>`;
                                 innerHtml += `<span style="color:${posColor};min-width:30px;">${posText}</span>`;
                                 innerHtml += arrow;
                                 innerHtml += pitIcon;
-                                innerHtml += `<span style="flex:1;">${coloredName}${stintHtml}</span>`;
-                                if (pitText) innerHtml += `<span style="color:#CCC;font-size:10px;">${pitText}</span>`;
+                                innerHtml += `<span class="tooltip-driver-name">${coloredName}${stintHtml}</span>`;
+                                if (pitText) innerHtml += `<span class="tooltip-pit-count">${pitText}</span>`;
                                 innerHtml += `</div>`;
                             });
                             
@@ -2354,14 +2434,14 @@ function renderGraph() {
                     title: {
                         display: true,
                         text: t('lapsAxis'),
-                        color: '#FFD700',
+                        color: cc.chartTitleColor,
                         font: {
                             size: 14,
                             weight: 'bold'
                         }
                     },
                     ticks: {
-                        color: '#888',
+                        color: cc.tickColor,
                         font: {
                             size: 11
                         },
@@ -2370,7 +2450,7 @@ function renderGraph() {
                         minRotation: 0
                     },
                     grid: {
-                        color: '#2a2a2a',
+                        color: cc.gridColor,
                         lineWidth: 0.5
                     }
                 },
@@ -2382,7 +2462,7 @@ function renderGraph() {
                     title: {
                         display: true,
                         text: t('positionAxis'),
-                        color: '#FFD700',
+                        color: cc.chartTitleColor,
                         font: {
                             size: 14,
                             weight: 'bold'
@@ -2390,16 +2470,16 @@ function renderGraph() {
                     },
                     ticks: {
                         stepSize: 1,
-                        color: '#888',
+                        color: cc.tickColor,
                         font: {
                             size: 11
                         }
                     },
                     grid: {
                         color: function(context) {
-                            if (!context || !context.tick) return '#2a2a2a';
+                            if (!context || !context.tick) return cc.gridColor;
                             const value = context.tick.value;
-                            return value % 5 === 0 ? '#444' : '#2a2a2a';
+                            return value % 5 === 0 ? cc.gridColorAlt : cc.gridColor;
                         },
                         lineWidth: function(context) {
                             if (!context || !context.tick) return 0.5;
@@ -2643,6 +2723,7 @@ function renderQualifyingProgressGraph(canvas, drivers, race) {
     
     if (progressChartInstance) progressChartInstance.destroy();
     
+    const cc = getChartColors();
     progressChartInstance = new Chart(canvas, {
         type: 'line',
         data: { datasets },
@@ -2656,14 +2737,14 @@ function renderQualifyingProgressGraph(canvas, drivers, race) {
                 title: {
                     display: true,
                     text: [t('qualTimeProgress') || 'Qualifying Time Progress', t('gapToBestLap') || 'Gap to Best Lap'],
-                    color: '#FFD700',
+                    color: cc.chartTitleColor,
                     font: { size: 20, weight: 'bold' }
                 },
                 legend: {
                     display: true,
                     position: 'right',
                     labels: {
-                        color: '#fff',
+                        color: cc.legendColor,
                         font: { size: 11 },
                         usePointStyle: true,
                         pointStyle: 'circle',
@@ -2726,7 +2807,7 @@ function renderQualifyingProgressGraph(canvas, drivers, race) {
                             const prevPositions = {};
                             prevRanked.forEach(([username, _], idx) => { prevPositions[username] = idx + 1; });
                             
-                            let html = `<div style="font-weight:bold;font-size:13px;margin-bottom:8px;color:#FFD700;">⏱ ${formatSessionTime(hoveredTime)}</div>`;
+                            let html = `<div class="tooltip-header-gold">⏱ ${formatSessionTime(hoveredTime)}</div>`;
                             
                             ranked.forEach(entry => {
                                 const driver = drivers.find(d => d.username === entry.username);
@@ -2738,11 +2819,11 @@ function renderQualifyingProgressGraph(canvas, drivers, race) {
                                 
                                 // Arrow
                                 const prev = prevPositions[entry.username];
-                                let arrow = '<span style="min-width:16px;display:inline-block;"></span>';
+                                let arrow = '<span class="tooltip-arrow-neutral"></span>';
                                 if (prev !== undefined && prev !== entry.position) {
                                     arrow = entry.position < prev
-                                        ? `<span style="color:#00FF00;min-width:16px;display:inline-block;">▲</span>`
-                                        : `<span style="color:#FF4444;min-width:16px;display:inline-block;">▼</span>`;
+                                        ? `<span class="tooltip-arrow-up">▲</span>`
+                                        : `<span class="tooltip-arrow-down">▼</span>`;
                                 }
                                 
                                 // Pit icon
@@ -2753,18 +2834,18 @@ function renderQualifyingProgressGraph(canvas, drivers, race) {
                                         return pitTime !== null && Math.abs(pitTime - hoveredTime) < 30;
                                     });
                                 }
-                                const pitIcon = isInPit ? '<span style="min-width:18px;display:inline-block;text-align:center;">🔧</span>' : '<span style="min-width:18px;display:inline-block;"></span>';
+                                const pitIcon = isInPit ? '<span class="tooltip-pit-icon">🔧</span>' : '<span class="tooltip-pit-empty"></span>';
                                 
                                 // Gap text
                                 const gapText = entry.gap === 0 ? t('leader') : (entry.gap >= 60 ? `+${formatTimeDiff(entry.gap)}` : `+${entry.gap.toFixed(3)}s`);
                                 
-                                html += `<div style="display:flex;gap:6px;align-items:center;margin:3px 0;">`;
-                                html += `<span style="display:inline-block;width:12px;height:12px;background:${color};border-radius:2px;flex-shrink:0;"></span>`;
-                                html += `<span style="color:#888;min-width:28px;">P${entry.position}</span>`;
+                                html += `<div class="tooltip-row">`;
+                                html += `<span class="tooltip-color-swatch" style="background:${color};"></span>`;
+                                html += `<span class="tooltip-pos-text">P${entry.position}</span>`;
                                 html += arrow;
                                 html += pitIcon;
-                                html += `<span style="flex:1;">${coloredName}</span>`;
-                                html += `<span style="color:#AAA;font-size:10px;min-width:60px;text-align:right;">${gapText}</span>`;
+                                html += `<span class="tooltip-driver-name">${coloredName}</span>`;
+                                html += `<span class="tooltip-gap-text">${gapText}</span>`;
                                 html += `</div>`;
                             });
                             
@@ -2808,24 +2889,24 @@ function renderQualifyingProgressGraph(canvas, drivers, race) {
                     type: 'linear',
                     min: 0,
                     max: maxTime * 1.02,
-                    title: { display: true, text: t('sessionTime') || 'Session Time', color: '#fff' },
+                    title: { display: true, text: t('sessionTime') || 'Session Time', color: cc.axisLabelColor },
                     ticks: {
-                        color: '#888',
+                        color: cc.tickColor,
                         maxRotation: 0,
                         callback: value => formatSessionTime(value)
                     },
-                    grid: { color: '#333' }
+                    grid: { color: cc.gridColor }
                 },
                 y: {
                     reverse: true,
                     min: 0,
-                    title: { display: true, text: t('gapToBestLap') || 'Gap to Best Lap', color: '#fff' },
+                    title: { display: true, text: t('gapToBestLap') || 'Gap to Best Lap', color: cc.axisLabelColor },
                     ticks: {
-                        color: '#888',
+                        color: cc.tickColor,
                         callback: value => formatGapValue(value)
                     },
                     grid: {
-                        color: ctx => ctx.tick && ctx.tick.value === 0 ? '#666' : '#333',
+                        color: ctx => ctx.tick && ctx.tick.value === 0 ? cc.gridColorZero : cc.gridColor,
                         lineWidth: ctx => ctx.tick && ctx.tick.value === 0 ? 2 : 1
                     }
                 }
@@ -3078,6 +3159,7 @@ function renderProgressGraph() {
     }
     
     // Create Chart.js chart
+    const cc = getChartColors();
     progressChartInstance = new Chart(canvas, {
         type: 'line',
         data: {
@@ -3098,7 +3180,7 @@ function renderProgressGraph() {
                 title: {
                     display: true,
                     text: [t('raceTimeProgress'), t('gapToCurrentLeader')],
-                    color: '#FFD700',
+                    color: cc.chartTitleColor,
                     font: {
                         size: 20,
                         weight: 'bold'
@@ -3108,7 +3190,7 @@ function renderProgressGraph() {
                     display: true,
                     position: 'right',
                     labels: {
-                        color: '#fff',
+                        color: cc.legendColor,
                         font: {
                             size: 11
                         },
@@ -3245,7 +3327,7 @@ function renderProgressGraph() {
                             prevDriversAtPoint.forEach((d, i) => { prevPositionMap[d.name] = i + 1; });
                             
                             // Build HTML
-                            let innerHtml = '<div style="font-weight:bold;font-size:13px;margin-bottom:8px;color:#FFFFFF;">';
+                            let innerHtml = '<div class="tooltip-header-white">';
                             innerHtml += isStart ? t('startGrid') : `${t('lapHeader')} ${timingPoint}`;
                             innerHtml += '</div>';
                             
@@ -3256,13 +3338,13 @@ function renderProgressGraph() {
                             driversAtPoint.forEach((driver) => {
                                 // Add separator line before first lapped driver
                                 if (driver.isLapped && !lappedSeparatorAdded) {
-                                    innerHtml += `<div style="border-top:1px solid #444;margin:8px 0 4px 0;"></div>`;
+                                    innerHtml += `<div class="tooltip-separator"></div>`;
                                     lappedSeparatorAdded = true;
                                 }
                                 
                                 // Add separator line before first DNF
                                 if (driver.isDNF && !dnfSeparatorAdded) {
-                                    innerHtml += `<div style="border-top:1px solid #444;margin:8px 0 4px 0;"></div>`;
+                                    innerHtml += `<div class="tooltip-separator"></div>`;
                                     dnfSeparatorAdded = true;
                                 }
                                 
@@ -3285,15 +3367,15 @@ function renderProgressGraph() {
                                 
                                 // Arrow
                                 const prevPos = prevPositionMap[driver.name];
-                                let arrow = '<span style="min-width:16px;display:inline-block;"></span>';
+                                let arrow = '<span class="tooltip-arrow-neutral"></span>';
                                 if (currentPos !== null && prevPos !== undefined && prevPos !== currentPos) {
                                     arrow = currentPos < prevPos
-                                        ? `<span style="color:#00FF00;min-width:16px;display:inline-block;">▲</span>`
-                                        : `<span style="color:#FF4444;min-width:16px;display:inline-block;">▼</span>`;
+                                        ? `<span class="tooltip-arrow-up">▲</span>`
+                                        : `<span class="tooltip-arrow-down">▼</span>`;
                                 }
                                 
                                 // Pit icon
-                                const pitIcon = driver.isInPit ? '<span style="min-width:18px;display:inline-block;text-align:center;">🔧</span>' : '<span style="min-width:18px;display:inline-block;"></span>';
+                                const pitIcon = driver.isInPit ? '<span class="tooltip-pit-icon">🔧</span>' : '<span class="tooltip-pit-empty"></span>';
                                 
                                 // Pit count
                                 const pitText = driver.pitStops > 0 ? ` (${driver.pitStops} ${driver.pitStops > 1 ? t('pits') : t('pit')})` : '';
@@ -3320,16 +3402,16 @@ function renderProgressGraph() {
                                 
                                 // Current stint driver (for relay races)
                                 const stintDriver = (driver.driverData.stints && driver.driverData.stints.length > 1) ? getStintDriverAtLap(driver.driverData, currentLap) : null;
-                                const stintHtml = stintDriver ? `<span style="color:#AAA;font-size:10px;"> [${stintDriver.name}]</span>` : '';
+                                const stintHtml = stintDriver ? `<span class="tooltip-stint-driver"> [${stintDriver.name}]</span>` : '';
                                 
-                                innerHtml += `<div style="display:flex;gap:6px;align-items:center;margin:4px 0;">`;
-                                innerHtml += `<span style="display:inline-block;width:12px;height:12px;background:${driver.color};border-radius:2px;flex-shrink:0;"></span>`;
+                                innerHtml += `<div class="tooltip-row-lg">`;
+                                innerHtml += `<span class="tooltip-color-swatch" style="background:${driver.color};"></span>`;
                                 innerHtml += `<span style="color:${posColor};min-width:30px;">${posText}</span>`;
                                 innerHtml += arrow;
                                 innerHtml += pitIcon;
-                                innerHtml += `<span style="flex:1;min-width:150px;">${coloredName}${stintHtml}</span>`;
-                                innerHtml += `<span style="color:#CCC;text-align:right;min-width:80px;">${gapText}</span>`;
-                                if (pitText) innerHtml += `<span style="color:#CCC;font-size:10px;">${pitText}</span>`;
+                                innerHtml += `<span class="tooltip-driver-name-wide">${coloredName}${stintHtml}</span>`;
+                                innerHtml += `<span class="tooltip-gap-wide">${gapText}</span>`;
+                                if (pitText) innerHtml += `<span class="tooltip-pit-count">${pitText}</span>`;
                                 innerHtml += `</div>`;
                             });
                             
@@ -3394,10 +3476,10 @@ function renderProgressGraph() {
                     title: {
                         display: true,
                         text: t('lapHeader'),
-                        color: '#fff'
+                        color: cc.axisLabelColor
                     },
                     ticks: {
-                        color: '#888',
+                        color: cc.tickColor,
                         maxRotation: 0,
                         autoSkip: true,
                         stepSize: 1,
@@ -3409,7 +3491,7 @@ function renderProgressGraph() {
                         }
                     },
                     grid: {
-                        color: '#333'
+                        color: cc.gridColor
                     }
                 },
                 y: {
@@ -3417,10 +3499,10 @@ function renderProgressGraph() {
                     title: {
                         display: true,
                         text: t('gapToCurrentLeader'),
-                        color: '#fff'
+                        color: cc.axisLabelColor
                     },
                     ticks: {
-                        color: '#888',
+                        color: cc.tickColor,
                         callback: function(value) {
                             return formatGapValue(value);
                         }
@@ -3428,9 +3510,9 @@ function renderProgressGraph() {
                     grid: {
                         color: function(context) {
                             if (context.tick && context.tick.value === 0) {
-                                return '#666';
+                                return cc.gridColorZero;
                             }
-                            return '#333';
+                            return cc.gridColor;
                         },
                         lineWidth: function(context) {
                             if (context.tick && context.tick.value === 0) {
@@ -3474,7 +3556,7 @@ function renderBestTimes() {
             const i = start + idx;
             const gap = i === 0 ? '-' : `+${formatTimeDiff(parseLapTime(d.bestLapTime) - parseLapTime(bestLaps[0].bestLapTime))}`;
             const driverWR = raceData.worldRecords ? raceData.worldRecords[d.car] : null;
-            const wrGap = driverWR ? `+${formatTimeDiff(parseLapTime(d.bestLapTime) - parseLapTime(driverWR.lapTime))}` : '-';
+            const wrGap = driverWR ? formatWRGap(parseLapTime(d.bestLapTime) - parseLapTime(driverWR.lapTime)) : '-';
             return `
                 <tr class="${i >= 10 ? 'expandable-row hidden' : ''}">
                     <td class="position pos-${i + 1}">${i + 1}</td>
@@ -3536,12 +3618,12 @@ function renderBestTimes() {
                                 <td>${p.count === 1 ? `
                                     ${t('lapHeader')} ${p.stops[0].lap} — ${formatPitStopActions(p.stops[0].reason)}
                                 ` : `
-                                    <span class="pit-details-toggle" onclick="togglePitDetails(this)" style="cursor:pointer;color:#4fc3f7;float:right;">
+                                    <span class="pit-details-toggle" onclick="togglePitDetails(this)">
                                         <span class="arrow">▶</span> ${t("details")}
                                     </span>
-                                    <div class="pit-details" style="display:none;margin-top:6px;">
-                                        <div style="margin-bottom:6px;"><span class="position pos-${i + 1}" style="margin-right:6px;">${i + 1}</span> ${getDriverLinkByIndex(p.driverIdx)} — ${p.count} ${t('pitStops').toLowerCase()} — ${formatLapTime(p.totalTime)}</div>
-                                        <table class="compact-table" style="margin:0;font-size:0.85em;">
+                                    <div class="pit-details" style="display:none;">
+                                        <div class="pit-summary-info"><span class="position pos-${i + 1} pit-summary-pos-badge">${i + 1}</span> ${getDriverLinkByIndex(p.driverIdx)} — ${p.count} ${t('pitStops').toLowerCase()} — ${formatLapTime(p.totalTime)}</div>
+                                        <table class="compact-table pit-details-table">
                                             <thead><tr><th>${t("driver")}</th><th>#</th><th>${t("lapHeader")}</th><th>${t("duration")}</th><th>${t("actions")}</th></tr></thead>
                                             <tbody>
                                                 ${p.stops.map((s, j) => `
@@ -3597,7 +3679,7 @@ function renderBestTimes() {
                             <th>${t("rank")}</th>
                             <th>${t("driver")}</th>
                             <th>${t("speed")}</th>
-                            <th>Lap</th>
+                            <th>${t("lapHeader")}</th>
                         </tr>
                     </thead>
                     <tbody id="top-speed-tbody">
@@ -3645,7 +3727,7 @@ function renderCompare() {
         return `<div class="csel" id="${id}">
             <div class="csel-selected"><span class="csel-text">${optional ? '— ' + (t('optional') || 'Optional') + ' —' : ''}</span><span class="csel-arrow">▾</span></div>
             <div class="csel-options">
-                ${optional ? `<div class="csel-option" data-value=""><span style="color:#888;">— ${t('optional') || 'Optional'} —</span></div>` : ''}
+                ${optional ? `<div class="csel-option" data-value=""><span class="csel-placeholder">— ${t('optional') || 'Optional'} —</span></div>` : ''}
                 ${driverOptions.map(d => `<div class="csel-option" data-value="${escapeHtml(d.value)}"><span class="csel-pos">P${d.pos}</span> ${parseLFSColors(d.nameColored)}</div>`).join('')}
             </div>
         </div>`;
@@ -3727,7 +3809,7 @@ function runComparison() {
     // Remove duplicates
     const unique = [...new Set(usernames)];
     if (unique.length < 2) {
-        container.innerHTML = `<p style="color:#888; text-align:center;">${t('selectTwoDrivers') || 'Select at least 2 different drivers'}</p>`;
+        container.innerHTML = `<p class="compare-empty">${t('selectTwoDrivers') || 'Select at least 2 different drivers'}</p>`;
         return;
     }
 
@@ -3990,6 +4072,7 @@ function renderCompareChart(stats) {
     const yMin = globalAvg > margin ? globalAvg - margin : 0;
     const yMax = globalAvg + margin;
 
+    const cc = getChartColors();
     compareChart = new Chart(canvas, {
         type: 'line',
         data: { labels, datasets },
@@ -4004,7 +4087,7 @@ function renderCompareChart(stats) {
             },
             plugins: {
                 legend: {
-                    labels: { color: '#ccc', usePointStyle: true }
+                    labels: { color: cc.legendColor, usePointStyle: true }
                 },
                 tooltip: {
                     callbacks: {
@@ -4030,17 +4113,17 @@ function renderCompareChart(stats) {
             },
             scales: {
                 x: {
-                    ticks: { color: '#999' },
-                    grid: { color: 'rgba(255,255,255,0.05)' }
+                    ticks: { color: cc.tickColor },
+                    grid: { color: cc.gridColor }
                 },
                 y: {
                     min: yMin,
                     max: yMax,
                     ticks: {
-                        color: '#999',
+                        color: cc.tickColor,
                         callback: (v) => formatLapTime(v)
                     },
-                    grid: { color: 'rgba(255,255,255,0.08)' }
+                    grid: { color: cc.gridColorAlt }
                 }
             }
         }
@@ -4267,7 +4350,7 @@ function renderAnalysis() {
             </div>
         </div>
         
-        <div class="section-grid" style="margin-top: 20px;">
+        <div class="section-grid section-grid-mt">
             <div class="section-box">
                 <h3>🎯 ${t('bestTheoreticalLap')} (${t('bestSectorsCombined')})</h3>
                 ${renderBestTheoreticalLap()}
@@ -4355,7 +4438,7 @@ function renderBestTheoreticalLap() {
                 ${theoretical.map((t, i) => {
                     const potentialColor = t.improvement > 0.001 ? '#4CAF50' : '#888';
                     const wrGapColor = t.vsWR !== null ? (t.vsWR < 0 ? '#FFD700' : '#FFA500') : '';
-                    const wrGapStr = t.vsWR !== null ? (t.vsWR < 0 ? `-${formatTimeDiff(-t.vsWR)}` : `+${formatTimeDiff(t.vsWR)}`) : '-';
+                    const wrGapStr = t.vsWR !== null ? formatWRGap(t.vsWR) : '-';
                     return `
                         <tr class="${i >= 10 ? 'expandable-row hidden' : ''}">
                             <td class="position pos-${i + 1}">${i + 1}</td>
@@ -4488,8 +4571,8 @@ function renderLapTimeDistribution() {
     const maxBucketCount = Math.max(...buckets);
     
     return `
-        <div style="margin-bottom: 20px;">
-            <table class="compact-table" style="margin-bottom: 15px;">
+        <div class="dist-section">
+            <table class="compact-table dist-table dist-table-mb">
                 <tbody>
                     <tr>
                         <td><strong>${t('validLaps')}:</strong></td>
@@ -4501,19 +4584,19 @@ function renderLapTimeDistribution() {
                         <td><strong>${t('totalLaps')}:</strong></td>
                         <td>${totalLaps}</td>
                         <td><strong>${t('discarded')}:</strong></td>
-                        <td style="color: #888;">${totalDiscarded}</td>
+                        <td class="dist-discarded-val">${totalDiscarded}</td>
                     </tr>
                     ${totalDiscarded > 0 ? `
                     <tr>
-                        <td colspan="4" style="font-size: 12px; color: #888; padding-left: 20px;">
+                        <td colspan="4" class="dist-col-note">
                             ↳ ${t('firstLaps')}: ${firstLapsDiscarded} | ${t('pitStopsLabel')}: ${pitStopLapsDiscarded} | ${t('outliers')} (&gt;${formatLapTime(threshold)}): ${outlierLapsDiscarded}
                         </td>
                     </tr>` : ''}
                     <tr>
                         <td><strong>${t('fastest')}:</strong></td>
-                        <td style="color: #4CAF50;">${formatLapTime(min)}</td>
+                        <td class="dist-fastest-val">${formatLapTime(min)}</td>
                         <td><strong>${t('slowest')}:</strong></td>
-                        <td style="color: #F44336;">${formatLapTime(max)}</td>
+                        <td class="dist-slowest-val">${formatLapTime(max)}</td>
                     </tr>
                     <tr>
                         <td><strong>${t('q1')}:</strong></td>
@@ -4528,29 +4611,29 @@ function renderLapTimeDistribution() {
                 </tbody>
             </table>
             
-            <div style="background: #2a2a2a; padding: 15px; border-radius: 5px;">
-                <h4 style="margin: 0 0 10px 0; color: #FFD700;">${t('distributionHistogram')}</h4>
-                <p style="margin: 0 0 15px 0; font-size: 11px; color: #888;">${t('percentageRanges')} (${formatLapTime(fastest)})</p>
+            <div class="dist-histogram">
+                <h4 class="dist-histogram-title">${t('distributionHistogram')}</h4>
+                <p class="dist-histogram-subtitle">${t('percentageRanges')} (${formatLapTime(fastest)})</p>
                 ${buckets.map((count, i) => {
                     const range = bucketRanges[i];
                     const barWidth = maxBucketCount > 0 ? (count / maxBucketCount) * 100 : 0;
                     const minTime = formatLapTime(range.min);
                     const maxTime = formatLapTime(range.max);
                     return `
-                        <div style="margin-bottom: 10px;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <div style="width: 140px;">
-                                    <div style="font-size: 11px; color: #fff; line-height: 1.2;">
+                        <div class="dist-bucket">
+                            <div class="dist-bucket-row">
+                                <div class="dist-bucket-label">
+                                    <div class="dist-bucket-range">
                                         ${minTime.substring(0, 7)} - ${maxTime.substring(0, 7)}
                                     </div>
-                                    <div style="font-size: 9px; color: #666; line-height: 1;">
+                                    <div class="dist-bucket-pct">
                                         ${range.minPct.toFixed(1)}% - ${range.maxPct.toFixed(1)}%
                                     </div>
                                 </div>
-                                <div style="flex: 1; background: #1a1a1a; height: 24px; border-radius: 3px; position: relative;">
-                                    <div style="background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; width: ${barWidth}%; border-radius: 3px; transition: width 0.3s;"></div>
+                                <div class="dist-bar-track">
+                                    <div class="dist-bar-fill" style="width: ${barWidth}%;"></div>
                                 </div>
-                                <div style="width: 40px; text-align: right; font-size: 12px; color: #fff;">
+                                <div class="dist-bar-count">
                                     ${count}
                                 </div>
                             </div>
@@ -4598,7 +4681,7 @@ function renderBestSectors() {
             <div class="section-box">
                 <h3>⚡ ${t("bestSector")} ${sector + 1}</h3>
                 ${wrSector ? `<p class="wr-info">🌍 WR (${wr.car}): ${wr.sectors[sector]}</p>` : ''}
-                <table class="compact-table">
+                <table class="compact-table dist-table">
                     <thead>
                         <tr>
                             <th>${t("rank")}</th>
@@ -4614,7 +4697,7 @@ function renderBestSectors() {
                             const gap = i === 0 ? '-' : `+${formatTimeDiff(s.time - sectorData[0].time)}`;
                             const driverWR = raceData.worldRecords ? raceData.worldRecords[s.driver.car] : null;
                             const driverWRSector = driverWR && driverWR.sectors && driverWR.sectors[sector] ? parseLapTime(driverWR.sectors[sector]) : null;
-                            const wrGap = driverWRSector ? `+${formatTimeDiff(s.time - driverWRSector)}` : '-';
+                            const wrGap = driverWRSector ? formatWRGap(s.time - driverWRSector) : '-';
                             return `
                                 <tr class="${i >= 10 ? 'expandable-row hidden' : ''}">
                                     <td class="position pos-${i + 1}">${i + 1}</td>
@@ -4636,7 +4719,7 @@ function renderBestSectors() {
     if (sectorTables.length === 0) return '';
     
     return `
-        <h2 style="margin-top: 30px;">📊 ${t('bestSectorTimes')}</h2>
+        <h2 class="best-sectors-heading">📊 ${t('bestSectorTimes')}</h2>
         <div class="section-grid">
             ${sectorTables.join('')}
         </div>
@@ -4924,15 +5007,15 @@ function getStintDriverAtLap(driverData, lap) {
 
 // Track coordinates for solar calculations (future day/night detection)
 const TRACK_LOCATIONS = {
-    'BL': { lat: 50.80, lng: -1.80, tz: 'Europe/London' },
-    'SO': { lat: 51.44, lng: -1.50, tz: 'Europe/London' },
-    'FE': { lat: 17.87, lng: -77.30, tz: 'America/Jamaica' },
-    'AU': { lat: 52.42, lng: -2.30, tz: 'Europe/London' },
-    'KY': { lat: 34.53, lng: 135.50, tz: 'Asia/Tokyo' },
-    'WE': { lat: 53.42, lng: -2.90, tz: 'Europe/London' },
-    'AS': { lat: 55.26, lng: -2.60, tz: 'Europe/London' },
-    'RO': { lat: 52.88, lng: -1.10, tz: 'Europe/London' },
-    'LA': { lat: 51.61, lng: -1.90, tz: 'Europe/London' }
+    'BL': { lat: 51.4016, lng: -1.80, tz: 'Europe/London' },
+    'SO': { lat: 51.4508, lng: -1.50, tz: 'Europe/London' },
+    'FE': { lat: 18.2128, lng: -77.30, tz: 'America/Jamaica' },
+    'AU': { lat: 52.2298, lng: -2.30, tz: 'Europe/London' },
+    'KY': { lat: 34.9034, lng: 135.50, tz: 'Asia/Tokyo' },
+    'WE': { lat: 52.8988, lng: -2.90, tz: 'Europe/London' },
+    'AS': { lat: 54.5311, lng: -2.60, tz: 'Europe/London' },
+    'RO': { lat: 52.5153, lng: -1.10, tz: 'Europe/London' },
+    'LA': { lat: 51.4770, lng: -1.90, tz: 'Europe/London' }
 };
 
 function getTrackLocation(trackCode) {
@@ -4956,7 +5039,7 @@ function getCarHtml(carName) {
     if (imageUrl) {
         return `<a href="${linkUrl}" target="_blank" class="link-primary car-link-with-image" title="${carName}">
             <img src="${imageUrl}" alt="${carName}" class="car-thumbnail" onerror="this.nextElementSibling.style.display='inline';this.style.display='none'">
-            <span style="display:none">${carName}</span></a>`;
+            <span class="hidden">${carName}</span></a>`;
     }
     return `<a href="${linkUrl}" target="_blank" class="link-primary">${carName}</a>`;
 }
@@ -5033,6 +5116,15 @@ function formatGapValue(seconds) {
         return `+${m}:${String(s).padStart(2,'0')}`;
     }
     return '+' + seconds.toFixed(0) + 's';
+}
+
+
+function formatWRGap(seconds) {
+    const sign = seconds < 0 ? '-' : '+';
+    const abs = Math.abs(seconds);
+    const min = Math.floor(abs / 60);
+    const sec = (abs % 60).toFixed(3).padStart(6, '0');
+    return sign + min + ':' + sec;
 }
 
 function formatTimeDiff(seconds) {
@@ -5167,9 +5259,6 @@ function renderChat() {
     let html = `
         <h2>💬 ${t('sessionChat')}</h2>
         <div class="section-box">
-            <p style="color: #888; margin-bottom: 20px;">
-                ${messageCount} ${messageWord} ${recordedWord}
-            </p>
             <div class="chat-container">
     `;
     
@@ -5185,6 +5274,7 @@ function renderChat() {
     
     html += `
             </div>
+            <p class="chat-count">${messageCount} ${messageWord} ${recordedWord}</p>
         </div>
     `;
     

@@ -77,6 +77,11 @@ namespace LFSStatistics
         private string defaultLogoUrl;
         public string DefaultLogoUrl { get { return defaultLogoUrl; } private set { defaultLogoUrl = value; } }
 
+        private const string _preserveLapsOnPit = "preserveLapsOnPit";
+        private const bool defPreserveLapsOnPit = true;
+        private bool preserveLapsOnPit;
+        public bool PreserveLapsOnPit { get { return preserveLapsOnPit; } private set { preserveLapsOnPit = value; } }
+
         public Configuration(string configFilePath)
         {
             // Even if LoadFromFile returns empty dictionary after an error, constructor should set all parameters to default.
@@ -185,6 +190,12 @@ namespace LFSStatistics
             if (!config.TryGetValue(_pubStatIDkey, out pubStatIDkey)) pubStatIDkey = defPubStatIDkey;
             // Default logo URL for JSON export
             if (!config.TryGetValue(_defaultLogoUrl, out defaultLogoUrl)) defaultLogoUrl = defDefaultLogoUrl;
+            // Preserve laps on ESC pit
+            if (!config.TryGetValue(_preserveLapsOnPit, out tmp) || !bool.TryParse(tmp, out preserveLapsOnPit))
+            {
+                ReportError(_preserveLapsOnPit, defPreserveLapsOnPit, tmp);
+                preserveLapsOnPit = defPreserveLapsOnPit;
+            }
         }
 
         /// <summary>

@@ -24,7 +24,7 @@ namespace LFSStatistics
 
         int RefreshInterval = 100;
         bool flagFirst = true; // used to get all connections on first STA packet
-        bool preserveLapsOnPit = true; // Keep lap data when driver ESC-pits and rejoins
+        bool preserveLapsOnPit; // Keep lap data when driver ESC-pits and rejoins
         ConsoleCtrl cc;
         Configuration config;
 
@@ -151,6 +151,7 @@ namespace LFSStatistics
 
             // Load Config
             config = new Configuration(configFileName);
+            preserveLapsOnPit = config.PreserveLapsOnPit;
 
             LFSStats.WriteLine("\n");
             // Load World Record
@@ -595,7 +596,7 @@ namespace LFSStatistics
 
             if (msg.UserType == UserType.MSO_USER) // 1 - normal visible user message
             {
-                sessionInfo.chat.Add(new ChatEntry(NickNameByUCID(msg.UCID), msg.Text));
+                sessionInfo.chat.Add(new ChatEntry(NickNameByUCID(msg.UCID), msg.Text, msg.UCID));
             }
         }
 
@@ -746,7 +747,15 @@ namespace LFSStatistics
             if (small.SubT == SmallType.SMALL_ALC)
             {
                 sessionInfo.allowedCarFlags = (long)small.UVal;
-                LFSStats.WriteLine("Allowed cars bitmask: 0x" + small.UVal.ToString("X"), Verbose.Session);
+                var carNames = new List<string>();
+                var flags = (CarFlags)small.UVal;
+                foreach (CarFlags car in Enum.GetValues(typeof(CarFlags)))
+                {
+                    if (car == CarFlags.None || car == CarFlags.All) continue;
+                    if (flags.HasFlag(car))
+                        carNames.Add(car.ToString());
+                }
+                LFSStats.WriteLine("Allowed cars: " + (carNames.Count > 0 ? string.Join(", ", carNames) : "ALL"), Verbose.Session);
             }
         }
 

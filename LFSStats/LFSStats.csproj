@@ -165,4 +165,7 @@
   <Target Name="StampViewerVersion" AfterTargets="Build">
     <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)stamp_version.ps1&quot; -ProjectDir &quot;$(ProjectDir)&quot;" />
   </Target>
+  <Target Name="PackageRelease" AfterTargets="StampViewerVersion" Condition="'$(Configuration)' == 'Release'">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;&amp; { &amp; '$(ProjectDir)package_release.ps1' -ProjectDir '$(ProjectDir)' -OutputDir '$(OutputPath)' }&quot;" />
+  </Target>
 </Project>

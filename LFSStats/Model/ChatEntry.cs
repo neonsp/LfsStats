@@ -7,11 +7,13 @@ namespace LFSStatistics
     {
         public string nickName;
         public string text;
+        public int ucid;
 
-        public ChatEntry(string nickName, string text)
+        public ChatEntry(string nickName, string text, int ucid = 0)
         {
             this.nickName = nickName;
             this.text = text;
+            this.ucid = ucid;
         }
     }
 }

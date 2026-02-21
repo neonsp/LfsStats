@@ -1,11 +1,188 @@
 /* LFS Stats Viewer - Main Stylesheet */
 
-/* Base Styles */
+/* =========================================================
+   CSS Custom Properties (Theme Variables)
+   :root = dark theme (default)
+   [data-theme="light"] = light theme overrides
+   ========================================================= */
+:root {
+    /* Backgrounds */
+    --bg-body:           #1a1a1a;
+    --bg-card:           #2a2a2a;
+    --bg-card-alt:       #333333;
+    --bg-chat:           #222222;
+    --bg-summary:        linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+    --bg-heatmap-sticky: #121212;
+    --bg-input:          #1a1a2e;
+
+    /* Semi-transparent surfaces */
+    --surface-04:  rgba(255,255,255,0.04);
+    --surface-06:  rgba(255,255,255,0.06);
+    --surface-08:  rgba(255,255,255,0.08);
+    --surface-10:  rgba(255,255,255,0.10);
+    --surface-15:  rgba(255,255,255,0.15);
+
+    /* Text */
+    --text-primary: #e0e0e0;
+    --text-muted:   #888888;
+    --text-subtle:  #999999;
+    --text-faint:   #666666;
+    --text-40: rgba(255,255,255,0.40);
+    --text-55: rgba(255,255,255,0.55);
+    --text-70: rgba(255,255,255,0.70);
+    --text-80: rgba(255,255,255,0.80);
+    --text-legend: #cccccc;
+
+    /* Borders */
+    --border-main:    #444444;
+    --border-subtle:  rgba(255,255,255,0.08);
+    --border-subtle2: rgba(255,255,255,0.10);
+    --border-chat:    #333333;
+
+    /* Graph legend */
+    --graph-legend-bg:     #333333;
+    --graph-legend-border: #555555;
+
+    /* Misc */
+    --drop-zone-border: #555555;
+    --table-even:       #333333;
+    --footer-border:    rgba(255,255,255,0.05);
+
+    /* LFS colored names */
+
+    /* Chart title color (matches getChartColors().chartTitleColor) */
+    --chart-title-color: #FFD700;
+
+    /* Header */
+    --header-bg: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+
+    /* Theme toggle button */
+    --toggle-bg:     #2a2a2a;
+    --toggle-border: #444444;
+    --toggle-hover:  #333333;
+}
+
+[data-theme="light"] {
+    --bg-body:           #9c9c9c;
+    --bg-card:           #e4e4e4;
+    --bg-card-alt:       #d4d4d4;
+    --bg-chat:           #a4a4a4;
+    --bg-summary:        linear-gradient(135deg, #c8c8c8 0%, #babdc0 50%, #cfcfcf 100%);
+    --bg-heatmap-sticky: #959595;
+    --bg-input:          #aaaaaa;
+
+    --surface-04:  rgba(0,0,0,0.03);
+    --surface-06:  rgba(0,0,0,0.04);
+    --surface-08:  rgba(0,0,0,0.06);
+    --surface-10:  rgba(0,0,0,0.07);
+    --surface-15:  rgba(0,0,0,0.10);
+
+    --text-primary: #1a1a1a;
+    --text-muted:   #444444;
+    --text-subtle:  #555555;
+    --text-faint:   #666666;
+    --text-40: rgba(0,0,0,0.40);
+    --text-55: rgba(0,0,0,0.50);
+    --text-70: rgba(0,0,0,0.65);
+    --text-80: rgba(0,0,0,0.75);
+    --text-legend: #555555;
+
+    --border-main:    #888888;
+    --border-subtle:  rgba(0,0,0,0.12);
+    --border-subtle2: rgba(0,0,0,0.15);
+    --border-chat:    #909090;
+
+    --graph-legend-bg:     #a0a0a0;
+    --graph-legend-border: #888888;
+
+    --drop-zone-border: #777777;
+    --table-even:       #9a9a9a;
+    --footer-border:    rgba(0,0,0,0.15);
+
+
+    --chart-title-color: #1a1a1a;
+
+    --header-bg: linear-gradient(160deg, #6a6a88 0%, #747498 50%, #686884 100%);
+
+    --toggle-bg:     #aaaaaa;
+    --toggle-border: #888888;
+    --toggle-hover:  #9a9a9a;
+}
+
+/* =========================================================
+   LFS Colored Names - text shadow for visibility
+   ========================================================= */
+/* LFS color classes — WCAG AA compliant */
+.lfs-c0 { color: #000000; }
+.lfs-c1 { color: #FF5555; }
+.lfs-c2 { color: #00FF00; }
+.lfs-c3 { color: #FFFF00; }
+.lfs-c4 { color: #2276FF; }
+.lfs-c5 { color: #FF44FF; }
+.lfs-c6 { color: #00FFFF; }
+.lfs-c7 { color: #FFFFFF; }
+.lfs-c8 { color: #999999; }
+.lfs-c9 { color: #BBBBBB; }
+
+/* Dark theme: shadow on black text for visibility */
+:root .lfs-name.lfs-c0 {
+    text-shadow: 0 0 1px rgba(255,255,255,0.3), 0 0 4px rgba(255,255,255,0.3);
+}
+
+/* Light theme: shadow on white, yellow and cyan for visibility */
+[data-theme="light"] .lfs-name.lfs-c7,
+[data-theme="light"] .lfs-name.lfs-c3,
+[data-theme="light"] .lfs-name.lfs-c6 {
+    text-shadow: 0 0 1px rgba(0,0,0,0.4), 0 0 3px rgba(0,0,0,0.2);
+}
+
+/* Light theme: LFS colors — original palette */
+[data-theme="light"] .lfs-c1 { color: #FF0000; }
+[data-theme="light"] .lfs-c2 { color: #00FF00; }
+[data-theme="light"] .lfs-c3 { color: #FFFF00; }
+[data-theme="light"] .lfs-c4 { color: #0000FF; }
+[data-theme="light"] .lfs-c5 { color: #FF00FF; }
+[data-theme="light"] .lfs-c6 { color: #00FFFF; }
+[data-theme="light"] .lfs-c7 { color: #FFFFFF; }
+[data-theme="light"] .lfs-c8 { color: #666666; }
+[data-theme="light"] .lfs-c9 { color: #888888; }
+
+/* =========================================================
+   Theme Toggle Button
+   ========================================================= */
+.theme-toggle-btn {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 9999;
+    background: var(--toggle-bg);
+    border: 1px solid var(--toggle-border);
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    line-height: 1;
+    padding: 0;
+}
+.theme-toggle-btn:hover {
+    background: var(--toggle-hover);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+
+/* =========================================================
+   Base Styles
+   ========================================================= */
 body {
     font-family: Arial, sans-serif;
     margin: 20px;
-    background-color: #1a1a1a;
-    color: #e0e0e0;
+    background-color: var(--bg-body);
+    color: var(--text-primary);
 }
 
 /* Header */
@@ -13,7 +190,7 @@ body {
     text-align: center;
     margin-bottom: 30px;
     padding: 0;
-    background: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    background: var(--header-bg);
     border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.08);
     overflow: hidden;
@@ -74,7 +251,7 @@ body {
 
 .track-subtitle {
     font-size: 15px;
-    color: rgba(255,255,255,0.55);
+    color: var(--text-55);
     margin-top: 4px;
     font-weight: 500;
     letter-spacing: 1.5px;
@@ -115,7 +292,7 @@ body {
 .race-info {
     padding: 12px 24px 8px;
     font-size: 13px;
-    color: rgba(255,255,255,0.7);
+    color: var(--text-70);
     line-height: 1.8;
 }
 
@@ -162,23 +339,24 @@ body {
     gap: 5px;
     margin-bottom: 20px;
     flex-wrap: wrap;
-    border-bottom: 2px solid #444;
+    border-bottom: 2px solid var(--border-main);
 }
 
 .tab {
     cursor: pointer;
     padding: 12px 20px;
-    background: #2a2a2a;
-    border: 1px solid #444;
+    background: var(--bg-card);
+    border: 1px solid var(--border-main);
     border-bottom: none;
     border-radius: 8px 8px 0 0;
     transition: all 0.3s;
     font-weight: 500;
     font-size: 13px;
+    color: var(--text-primary);
 }
 
 .tab:hover {
-    background: #333;
+    background: var(--bg-card-alt);
 }
 
 .tab.active {
@@ -208,7 +386,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin: 20px 0;
-    background: #2a2a2a;
+    background: var(--bg-card);
     border-radius: 8px;
     overflow: hidden;
 }
@@ -216,18 +394,18 @@ table {
 th, td {
     padding: 12px;
     text-align: left;
-    border-bottom: 1px solid #444;
+    border-bottom: 1px solid var(--border-main);
 }
 
 th {
-    background: #333;
+    background: var(--bg-card-alt);
     font-weight: bold;
     position: sticky;
     top: 0;
 }
 
 tr:hover {
-    background: #333;
+    background: var(--bg-card-alt);
 }
 
 tr:last-child td {
@@ -265,7 +443,7 @@ tr:last-child td {
 .lbl-sticky-pos {
     position: sticky;
     left: 0;
-    background: #2a2a2a;
+    background: var(--bg-card);
     font-weight: bold;
     z-index: 2;
     min-width: 60px;
@@ -274,14 +452,14 @@ tr:last-child td {
 .lbl-sticky-driver {
     position: sticky;
     left: 60px;
-    background: #2a2a2a;
+    background: var(--bg-card);
     z-index: 2;
 }
 
 .lbl-sticky-header-pos {
     position: sticky;
     left: 0;
-    background: #333;
+    background: var(--bg-card-alt);
     z-index: 3;
     min-width: 60px;
 }
@@ -289,7 +467,7 @@ tr:last-child td {
 .lbl-sticky-header-driver {
     position: sticky;
     left: 60px;
-    background: #333;
+    background: var(--bg-card-alt);
     z-index: 3;
 }
 
@@ -320,7 +498,7 @@ tr:last-child td {
 }
 
 .section-box {
-    background: #2a2a2a;
+    background: var(--bg-card);
     padding: 20px;
     border-radius: 8px;
     border-left: 4px solid #237da0;
@@ -334,7 +512,7 @@ tr:last-child td {
 
 /* Graph Container */
 #graph-container {
-    background: #2a2a2a;
+    background: var(--bg-card);
     padding: 20px;
     border-radius: 8px;
     margin: 20px 0;
@@ -350,7 +528,7 @@ tr:last-child td {
 
 /* Progress Graph Container */
 #progress-graph-container {
-    background: #2a2a2a;
+    background: var(--bg-card);
     padding: 20px;
     border-radius: 8px;
     margin: 20px 0;
@@ -368,7 +546,7 @@ tr:last-child td {
 .legend {
     margin-top: 20px;
     padding: 15px;
-    background: #2a2a2a;
+    background: var(--bg-card);
     border-radius: 8px;
 }
 
@@ -406,6 +584,13 @@ tr:last-child td {
     margin-bottom: 10px;
 }
 
+.wr-gap {
+    color: var(--text-muted);
+    font-size: 0.7em;
+}
+
+
+
 /* Highlight Colors */
 .highlight-success {
     color: #4CAF50;
@@ -425,7 +610,7 @@ tr:last-child td {
 
 /* Error Message */
 .error-message {
-    background: #2a2a2a;
+    background: var(--bg-card);
     border-left: 4px solid #F44336;
     padding: 20px;
     border-radius: 8px;
@@ -488,7 +673,7 @@ tr:last-child td {
 }
 
 .text-muted {
-    color: #888;
+    color: var(--text-muted);
 }
 
 .text-gold {
@@ -554,7 +739,7 @@ tr:last-child td {
 /* Empty State */
 .empty-state {
     text-align: center;
-    color: #888;
+    color: var(--text-muted);
 }
 
 /* Responsive */
@@ -592,9 +777,9 @@ tr:last-child td {
     display: block;
     margin: 15px auto 0;
     padding: 10px 20px;
-    background: #2a2a2a;
-    color: #fff;
-    border: solid 1px #444;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: solid 1px var(--border-main);
     border-radius: 5px;
     cursor: pointer;
     font-size: 14px;
@@ -623,8 +808,8 @@ tr:last-child td {
     gap: 30px;
     margin-top: 15px;
     padding: 15px;
-    background: #333 !important;
-    border: 2px solid #555;
+    background: var(--graph-legend-bg) !important;
+    border: 2px solid var(--graph-legend-border);
     border-radius: 5px;
     font-size: 14px;
 }
@@ -640,7 +825,7 @@ tr:last-child td {
 }
 
 .legend-item:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--surface-10);
 }
 
 .legend-marker {
@@ -669,12 +854,12 @@ tr:last-child td {
 }
 
 .lapped-marker {
-    color: #888;
+    color: var(--text-muted);
     letter-spacing: 2px;
 }
 
 .legend-text {
-    color: #CCC;
+    color: var(--text-legend);
 }
 
 .personal-best-marker {
@@ -689,19 +874,27 @@ tr:last-child td {
 
 /* Chat Messages */
 .chat-container {
-    background: #222;
-    border: 1px solid #444;
+    background: var(--bg-chat);
+    border: 1px solid var(--border-main);
     border-radius: 8px;
     padding: 15px;
     max-height: 600px;
     overflow-y: auto;
 }
 
+.chat-count {
+    text-align: right;
+    font-size: 0.8em;
+    color: var(--text-muted);
+    margin-top: 8px;
+    margin-bottom: 0;
+}
+
 .chat-message {
     display: flex;
     gap: 10px;
     padding: 8px 0;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border-chat);
     align-items: baseline;
 }
 
@@ -710,7 +903,7 @@ tr:last-child td {
 }
 
 .chat-number {
-    color: #666;
+    color: var(--text-faint);
     font-size: 11px;
     min-width: 30px;
     text-align: right;
@@ -723,7 +916,7 @@ tr:last-child td {
 }
 
 .chat-text {
-    color: #e0e0e0;
+    color: var(--text-primary);
     flex: 1;
     word-wrap: break-word;
 }
@@ -764,11 +957,18 @@ tr:last-child td {
 
 /* Relay/stint separator */
 .relay-separator {
-    color: #888;
+    color: var(--text-muted);
     margin: 0 2px;
 }
 
 /* Stint bar */
+.stint-bar {
+    display: flex;
+    height: 24px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
 .stint-bar div {
     transition: opacity 0.2s;
     cursor: default;
@@ -817,9 +1017,9 @@ tr:last-child td {
     gap: 12px;
     padding: 16px 20px;
     margin: 0 0 8px 0;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+    background: var(--bg-summary);
     border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid var(--border-subtle);
 }
 .summary-stat {
     display: flex;
@@ -827,7 +1027,7 @@ tr:last-child td {
     align-items: center;
     text-align: center;
     padding: 10px 8px;
-    background: rgba(255,255,255,0.04);
+    background: var(--surface-04);
     border-radius: 6px;
     transition: background 0.2s;
 }
@@ -835,7 +1035,7 @@ tr:last-child td {
     cursor: pointer;
 }
 .summary-stat:hover {
-    background: rgba(255,255,255,0.08);
+    background: var(--surface-08);
 }
 .summary-stat .stat-icon {
     font-size: 1.4em;
@@ -844,11 +1044,11 @@ tr:last-child td {
 .summary-stat .stat-value {
     font-size: 1.1em;
     font-weight: bold;
-    color: #fff;
+    color: var(--text-primary);
     line-height: 1.3;
 }
 .summary-stat .stat-value a {
-    color: #fff;
+    color: var(--text-primary);
     text-decoration: none;
 }
 .summary-stat .stat-value a:hover {
@@ -856,14 +1056,14 @@ tr:last-child td {
 }
 .summary-stat .stat-label {
     font-size: 0.75em;
-    color: #999;
+    color: var(--text-subtle);
     margin-top: 2px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 .summary-stat .stat-detail {
     font-size: 0.8em;
-    color: #bbb;
+    color: var(--text-legend);
     margin-top: 2px;
 }
 .summary-stat .stat-value.purple {
@@ -887,16 +1087,16 @@ tr:last-child td {
     flex-wrap: wrap;
     margin-bottom: 20px;
     padding: 12px 16px;
-    background: rgba(255,255,255,0.04);
+    background: var(--surface-04);
     border-radius: 8px;
 }
 .compare-select {
     flex: 1;
     min-width: 160px;
     padding: 8px 12px;
-    background: #1a1a2e;
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.15);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border: 1px solid var(--surface-15);
     border-radius: 6px;
     font-size: 0.9em;
     cursor: pointer;
@@ -907,7 +1107,7 @@ tr:last-child td {
 }
 .compare-vs {
     font-weight: bold;
-    color: #888;
+    color: var(--text-muted);
     font-size: 0.9em;
 }
 .compare-btn {
@@ -935,15 +1135,15 @@ tr:last-child td {
 .compare-table th, .compare-table td {
     padding: 8px 14px;
     text-align: center;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid var(--surface-06);
 }
 .compare-table th {
-    background: rgba(255,255,255,0.04);
+    background: var(--surface-04);
     white-space: nowrap;
 }
 .compare-label {
     text-align: left !important;
-    color: #999;
+    color: var(--text-subtle);
     font-size: 0.85em;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -975,19 +1175,20 @@ tr:last-child td {
     align-items: center;
     justify-content: space-between;
     padding: 8px 12px;
-    background: #1a1a2e;
-    border: 1px solid rgba(255,255,255,0.15);
+    background: var(--bg-input);
+    border: 1px solid var(--surface-15);
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.9em;
     min-height: 20px;
     user-select: none;
+    color: var(--text-primary);
 }
 .csel-selected:hover {
     border-color: #237da0;
 }
 .csel-arrow {
-    color: #888;
+    color: var(--text-muted);
     margin-left: 8px;
     font-size: 0.8em;
 }
@@ -1004,8 +1205,8 @@ tr:last-child td {
     right: 0;
     max-height: 300px;
     overflow-y: auto;
-    background: #1a1a2e;
-    border: 1px solid rgba(255,255,255,0.15);
+    background: var(--bg-input);
+    border: 1px solid var(--surface-15);
     border-radius: 0 0 6px 6px;
     z-index: 100;
     box-shadow: 0 8px 24px rgba(0,0,0,0.5);
@@ -1019,14 +1220,15 @@ tr:last-child td {
     white-space: nowrap;
     font-size: 0.85em;
     transition: background 0.15s;
+    color: var(--text-primary);
 }
 .csel-option:hover {
-    background: rgba(255,255,255,0.1);
+    background: var(--surface-10);
 }
 .csel-pos {
     display: inline-block;
     min-width: 28px;
-    color: #888;
+    color: var(--text-muted);
     font-size: 0.85em;
 }
 @media (max-width: 600px) {
@@ -1044,10 +1246,10 @@ tr:last-child td {
     width: auto;
 }
 .heatmap-table thead th {
-    background: rgba(255,255,255,0.06);
+    background: var(--surface-06);
     padding: 4px 2px;
     font-size: 0.7em;
-    color: #999;
+    color: var(--text-subtle);
     text-align: center;
     position: sticky;
     top: 0;
@@ -1056,7 +1258,7 @@ tr:last-child td {
 .heatmap-driver {
     position: sticky;
     left: 0;
-    background: #121212 !important;
+    background: var(--bg-heatmap-sticky) !important;
     z-index: 3;
     white-space: nowrap;
     padding: 4px 8px !important;
@@ -1111,7 +1313,7 @@ thead .heatmap-driver {
     flex-wrap: wrap;
     padding: 8px 0;
     font-size: 0.8em;
-    color: #999;
+    color: var(--text-subtle);
 }
 .heatmap-legend-fast { color: rgb(40,180,40); font-size: 1.3em; }
 .heatmap-legend-mid { color: rgb(255,150,20); font-size: 1.3em; }
@@ -1141,13 +1343,13 @@ thead .heatmap-driver {
     text-align: center;
     padding: 20px 10px;
     margin-top: 30px;
-    color: #a4a4a4;
+    color: var(--text-muted);
     font-size: 1em;
-    border-top: 1px solid rgba(255,255,255,0.05);
+    border-top: 1px solid var(--footer-border);
 }
 .site-footer #exported-at {
     font-size: 0.8em;
-    color: #777;
+    color: var(--text-faint);
     margin-top: 4px;
 }
 
@@ -1165,7 +1367,7 @@ thead .heatmap-driver {
 
 /* File drop zone */
 #file-drop-zone {
-    border: 2px dashed #555;
+    border: 2px dashed var(--drop-zone-border);
     border-radius: 12px;
     padding: 60px 40px;
     text-align: center;
@@ -1193,6 +1395,11 @@ thead .heatmap-driver {
 }
 
 /* Pit stop details toggle */
+.pit-details-toggle {
+    cursor: pointer;
+    color: #4fc3f7;
+    float: right;
+}
 .pit-details-toggle .arrow {
     display: inline-block;
     transition: transform 0.2s;
@@ -1205,12 +1412,328 @@ thead .heatmap-driver {
     background: rgba(0,0,0,0.2);
 }
 
-}
-
 .pit-details.hidden {
     display: none;
 }
 
+.pit-details {
+    text-align: left;
+    margin-top: 6px;
+}
+
 .hidden {
     display: none;
+}
+
+/* =========================================================
+   Table Column Alignment
+   ========================================================= */
+
+/* Results: center all except Driver (col 2) and Car (col 3) */
+#results th,
+#results td {
+    text-align: center;
+}
+#results td:nth-child(2),
+#results th:nth-child(2),
+#results td:nth-child(3),
+#results th:nth-child(3) {
+    text-align: left;
+}
+
+/* Overview: center all except driver (col 2) */
+#overview th,
+#overview td {
+    text-align: center;
+}
+#overview tr td:nth-child(2),
+#overview tr th:nth-child(2) {
+    text-align: left;
+}
+#overview td.text-left,
+#overview th.text-left {
+    text-align: left;
+}
+
+/* Lap by Lap: center all */
+#lbl .lbl-table th,
+#lbl .lbl-table td {
+    text-align: center;
+}
+
+/* Best Times: center all except driver (col 2) */
+#best-times th,
+#best-times td {
+    text-align: center;
+}
+#best-times tr td:nth-child(2),
+#best-times tr th:nth-child(2) {
+    text-align: left;
+}
+
+/* Analysis: center all except driver (col 2), skip Lap Time Distribution */
+#analysis .compact-table:not(.dist-table) th,
+#analysis .compact-table:not(.dist-table) td {
+    text-align: center;
+}
+#analysis .compact-table:not(.dist-table) tr td:nth-child(2),
+#analysis .compact-table:not(.dist-table) tr th:nth-child(2) {
+    text-align: left;
+}
+
+/* Incidents: center all except driver (col 2) */
+#incidents th,
+#incidents td {
+    text-align: center;
+}
+#incidents tr td:nth-child(2),
+#incidents tr th:nth-child(2) {
+    text-align: left;
+}
+
+/* =========================================================
+   Migrated Inline Styles
+   (moved from stats_renderer.js — static styles only)
+   ========================================================= */
+
+/* File picker hint text */
+.file-picker-hint {
+    color: var(--text-muted);
+    font-size: 0.85em;
+}
+
+/* Server name label in header */
+.server-name-label {
+    font-size: 11px;
+    color: var(--text-40);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+/* Driver summary h4 heading */
+.driver-summary-heading {
+    margin-top: 12px;
+}
+
+/* ── Tooltip rows ─────────────────────────────────────── */
+
+.tooltip-header-gold {
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 8px;
+    color: var(--chart-title-color);
+}
+
+.tooltip-header-white {
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 8px;
+    color: #FFFFFF;
+}
+
+.tooltip-separator {
+    border-top: 1px solid #444;
+    margin: 8px 0 4px 0;
+}
+
+/* flex row with small gap, 3px margin */
+.tooltip-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin: 3px 0;
+}
+
+/* flex row with small gap, 4px margin */
+.tooltip-row-lg {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin: 4px 0;
+}
+
+/* Position-change arrows */
+.tooltip-arrow-neutral {
+    min-width: 16px;
+    display: inline-block;
+}
+.tooltip-arrow-up {
+    color: #00FF00;
+    min-width: 16px;
+    display: inline-block;
+}
+.tooltip-arrow-down {
+    color: #FF4444;
+    min-width: 16px;
+    display: inline-block;
+}
+
+/* Pit icon (active / empty placeholder) */
+.tooltip-pit-icon {
+    min-width: 18px;
+    display: inline-block;
+    text-align: center;
+}
+.tooltip-pit-empty {
+    min-width: 18px;
+    display: inline-block;
+}
+
+/* Driver color swatch (background set inline) */
+.tooltip-color-swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+/* Static position text (used when posColor is fixed #888) */
+.tooltip-pos-text {
+    color: #888;
+    min-width: 28px;
+}
+
+/* Driver name cells */
+.tooltip-driver-name {
+    flex: 1;
+}
+.tooltip-driver-name-wide {
+    flex: 1;
+    min-width: 150px;
+}
+
+/* Gap / best time cells */
+.tooltip-gap-text {
+    color: #AAA;
+    font-size: 10px;
+    min-width: 60px;
+    text-align: right;
+}
+.tooltip-gap-wide {
+    color: #CCC;
+    text-align: right;
+    min-width: 80px;
+}
+
+/* Stint driver label inside driver name */
+.tooltip-stint-driver {
+    color: #AAA;
+    font-size: 10px;
+}
+
+/* Pit count label */
+.tooltip-pit-count {
+    color: #CCC;
+    font-size: 10px;
+}
+
+/* ── Pit details panel (inline in HTML) ───────────────── */
+
+.pit-summary-info {
+    margin-bottom: 6px;
+}
+.pit-summary-pos-badge {
+    margin-right: 6px;
+}
+.pit-details-table {
+    margin: 0;
+    font-size: 0.85em;
+}
+
+/* ── Compare tool ─────────────────────────────────────── */
+
+.csel-placeholder {
+    color: var(--text-muted);
+}
+.compare-empty {
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* ── Lap-time distribution section ───────────────────── */
+
+.dist-section {
+    margin-bottom: 20px;
+}
+.dist-table-mb {
+    margin-bottom: 15px;
+}
+.dist-discarded-val {
+    color: var(--text-muted);
+}
+.dist-col-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding-left: 20px;
+}
+.dist-fastest-val {
+    color: #4CAF50;
+}
+.dist-slowest-val {
+    color: #F44336;
+}
+.dist-histogram {
+    background: var(--bg-card);
+    padding: 15px;
+    border-radius: 5px;
+}
+.dist-histogram-title {
+    margin: 0 0 10px 0;
+    color: #FFD700;
+}
+.dist-histogram-subtitle {
+    margin: 0 0 15px 0;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.dist-bucket {
+    margin-bottom: 10px;
+}
+.dist-bucket-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.dist-bucket-label {
+    width: 140px;
+}
+.dist-bucket-range {
+    font-size: 11px;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+.dist-bucket-pct {
+    font-size: 9px;
+    color: var(--text-faint);
+    line-height: 1;
+}
+.dist-bar-track {
+    flex: 1;
+    background: var(--bg-body);
+    height: 24px;
+    border-radius: 3px;
+    position: relative;
+}
+.dist-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+.dist-bar-count {
+    width: 40px;
+    text-align: right;
+    font-size: 12px;
+    color: #fff;
+}
+
+/* ── Section spacing helpers ──────────────────────────── */
+
+.section-grid-mt {
+    margin-top: 20px;
+}
+.best-sectors-heading {
+    margin-top: 30px;
 }

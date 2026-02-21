@@ -1,4 +1,4 @@
-# LFS Stats v3.0.2
+# LFS Stats v3.1.1
 
 **Gerador de estatísticas e visualizador interativo para [Live for Speed](https://www.lfs.net/).**
 
@@ -18,6 +18,7 @@ O LFS Stats conecta-se a um servidor de Live for Speed (ou replay) via InSim, ca
   - [Gráficos Interativos](#gráficos-interativos)
   - [Comparador de Pilotos](#comparador-de-pilotos)
   - [Tipos de Sessão](#tipos-de-sessão)
+  - [Tema Escuro / Claro](#tema-escuro--claro)
   - [Internacionalização](#internacionalização)
 - [Implantação do Visualizador](#implantação-do-visualizador)
   - [Servidor Web](#implantação-em-servidor-web)
@@ -150,6 +151,10 @@ Selecione de 2 a 5 pilotos para comparar:
 | **Qualificação** | Gráfico de posição temporal, evolução da melhor volta, zona de limite de tempo |
 | **Prática** | Análise básica de tempos de volta |
 
+### Tema Escuro / Claro
+
+Alterne entre tema escuro e claro com o botão 🌙/☀️ (canto superior direito). A preferência é salva no `localStorage` e aplicada instantaneamente — incluindo todos os gráficos Chart.js. Os códigos de cor LFS (`^0`–`^9`) são renderizados com ajustes de contraste por tema.
+
 ### Internacionalização
 
 O visualizador deteta automaticamente o idioma do navegador com 16 idiomas suportados:
@@ -215,6 +220,7 @@ Abra `stats_viewer.html` diretamente no seu navegador. Aparecerá uma zona de ar
 | `askForFileNameOnRST` | `false` | Perguntar nome do ficheiro ao exportar |
 | `exportOnSTAte` | `no` | Exportar na mudança de estado (interrupção): `yes`, `no`, ou `ask` |
 | `askForFileNameOnSTA` | `false` | Perguntar nome do ficheiro na mudança de estado |
+| `preserveLapsOnPit` | `true` | Manter dados de voltas quando um piloto faz ESC-pit e volta a entrar |
 | `defaultLogoUrl` | *(vazio)* | URL do logo padrão escrito em `metadata.logoUrl` em cada exportação JSON |
 | `pubStatIDkey` | *(vazio)* | Chave API PubStat do LFS World para recordes mundiais |
 

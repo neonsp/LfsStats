@@ -486,6 +486,9 @@ namespace LFSStatistics
             foreach (var chatEntry in sessionInfo.chat)
             {
                 string nick = lfsStripColor(chatEntry.nickName);
+                // If nick was unresolved at message time, try resolving UCID now
+                if (nick == "???" && chatEntry.ucid > 0 && connections != null && connections.ContainsKey(chatEntry.ucid))
+                    nick = lfsStripColor(connections[chatEntry.ucid].nickName);
                 int chatDriverIdx = nickToIndex.ContainsKey(nick) ? nickToIndex[nick] : -1;
                 raceData.chat.Add(new ChatMessage
                 {

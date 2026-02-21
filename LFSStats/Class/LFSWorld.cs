@@ -61,8 +61,9 @@ namespace LFSStatistics
             public long[] Sector { get; private set; }
             public string RacerName { get; private set; }
             public InSimDotNet.Packets.PlayerFlags Flags { get; private set; }
+            public long IdWr { get; private set; }
 
-            internal WR(string track, string carName, long wrTime, long[] split, long[] sector, string racerName, InSimDotNet.Packets.PlayerFlags flags)
+            internal WR(string track, string carName, long wrTime, long[] split, long[] sector, string racerName, InSimDotNet.Packets.PlayerFlags flags, int idWr)
             {
                 Track = track;
                 CarName = carName;
@@ -71,6 +72,7 @@ namespace LFSStatistics
                 Sector = sector;
                 RacerName = racerName;
                 Flags = flags;
+                IdWr = idWr;
             }
         }
 
@@ -267,7 +269,8 @@ namespace LFSStatistics
                     splits,
                     sectors,
                     wri.racername,
-                    flags
+                    flags,
+                    wri.id_wr
                 );
 
                 trackInfo.CarTable[wri.car] = wr;
@@ -316,8 +319,13 @@ namespace LFSStatistics
                     retValue = "LA";
                     break;
             }
-            retValue += (int.Parse(trackCode[1].ToString()) + 1).ToString();
-            if (trackCode[2] == '1')
+            // Track number and reversed flag depend on code length
+            // 3-char: e.g. "010" → env=0, track=1, reversed=0
+            // 4-char: e.g. "7100" → env=7, track=10, reversed=0
+            string trackNumStr = trackCode.Substring(1, trackCode.Length - 2);
+            int trackNum = int.Parse(trackNumStr) + 1;
+            retValue += trackNum.ToString();
+            if (trackCode[trackCode.Length - 1] == '1')
                 retValue += "R";
             return retValue;
         }
