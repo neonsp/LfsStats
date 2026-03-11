@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using InSimDotNet.Packets;
 
 namespace LFSStatistics
@@ -139,6 +140,7 @@ namespace LFSStatistics
             // Metadata
             raceData.metadata = new MetadataJson
             {
+                version = Assembly.GetExecutingAssembly().GetName().Version.ToString(3),
                 exportedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                 mprUrl = "",
                 logoUrl = config.DefaultLogoUrl
@@ -606,6 +608,11 @@ namespace LFSStatistics
                 .ThenBy(tp => tp.split == 0 ? 999 : tp.split)  // LAP (0) always last
                 .ToList();
 
+            // Track max ETime per driver to detect invalid timing events (e.g., DNF ETime resets)
+            var maxETimePerDriver = new Dictionary<string, long>();
+            foreach (var driver in raceStatsList)
+                maxETimePerDriver[driver.userName] = 0;
+
             // For each timing point, calculate positions based on ETime
             foreach (var timingPoint in sortedTimingPoints)
             {
@@ -616,9 +623,11 @@ namespace LFSStatistics
                     var evt = driver.timingEvents
                         .FirstOrDefault(e => e.Lap == timingPoint.lap && e.Split == timingPoint.split);
 
-                    if (evt != null)
+                    // Skip events with ETime <= 0 or non-monotonic ETime (invalid/DNF timing data)
+                    if (evt != null && evt.ETime > 0 && evt.ETime > maxETimePerDriver[driver.userName])
                     {
                         driversAtPoint.Add((driver.userName, evt.ETime, finalPositionIndex[driver.userName]));
+                        maxETimePerDriver[driver.userName] = evt.ETime;
                     }
                 }
 

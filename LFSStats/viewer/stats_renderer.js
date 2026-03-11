@@ -1,7 +1,7 @@
 ﻿// LFS Stats Viewer - Complete JavaScript Renderer
 // Reads JSON and renders all statistics
 
-const LFS_STATS_VERSION = '3.1.2';
+const LFS_STATS_VERSION = '3.1.4';
 
 let raceData = null;
 
@@ -3124,10 +3124,14 @@ function renderProgressGraph() {
                 
                 // Draw DNF marker (X) at last valid position
                 if (progressMarkerVisibility.dnf && driverData.status === 'dnf') {
-                    const lapsCompleted = driverData.lapsCompleted || 0;
-                    
-                    // Get gap at last completed lap
-                    const lastGapData = dataset.data[lapsCompleted];
+                    // Find last non-null data point (lapETimes may be shorter than lapsCompleted)
+                    let lastGapData = null;
+                    for (let i = dataset.data.length - 1; i >= 0; i--) {
+                        if (dataset.data[i] && dataset.data[i].y !== null && dataset.data[i].y !== undefined) {
+                            lastGapData = dataset.data[i];
+                            break;
+                        }
+                    }
                     
                     if (lastGapData && lastGapData.y !== null && lastGapData.y !== undefined) {
                         const x = xScale.getPixelForValue(lastGapData.x);
@@ -4779,20 +4783,34 @@ function calculateCombativity() {
 function calculateLapsLed() {
     const race = raceData.session;
     const lapsLed = {};
-    
-    // For each car, count how many position entries are P1
+    const splitsPerLap = (race.splitsPerLap || 0) + 1; // timing points per lap (splits + lap line)
     const totalLaps = race.laps;
     
+    // Count laps led using only lap-completion timing points (every splitsPerLap-th entry)
     raceData.cars.forEach(driver => {
         const posArray = driver.positions || [];
-        const leaderLaps = posArray.filter(p => p === 1).length;
+        let leaderLaps = 0;
+        
+        if (splitsPerLap > 1) {
+            // Count only at lap completion points (last timing point of each lap)
+            for (let lap = 1; lap <= totalLaps; lap++) {
+                const idx = lap * splitsPerLap - 1; // lap-completion index
+                if (idx < posArray.length && posArray[idx] === 1) {
+                    leaderLaps++;
+                }
+            }
+        } else {
+            // Fallback: no splits, every entry is a lap
+            leaderLaps = posArray.filter(p => p === 1).length;
+        }
+        
         if (leaderLaps > 0) {
-                lapsLed[driver.username] = {
-                    name: driver.name,
-                    username: driver.username,
-                    laps: leaderLaps,
-                    percentage: (leaderLaps / posArray.length) * 100
-                };
+            lapsLed[driver.username] = {
+                name: driver.name,
+                username: driver.username,
+                laps: leaderLaps,
+                percentage: (leaderLaps / totalLaps) * 100
+            };
         }
     });
     

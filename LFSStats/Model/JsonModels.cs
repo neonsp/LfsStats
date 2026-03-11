@@ -39,6 +39,7 @@ namespace LFSStatistics
     // Metadata
     public class MetadataJson
     {
+        public string version { get; set; }
         public string exportedAt { get; set; }
         public string mprUrl { get; set; }
         public string logoUrl { get; set; }
