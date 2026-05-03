@@ -1,7 +1,7 @@
 ﻿// LFS Stats Viewer - Complete JavaScript Renderer
 // Reads JSON and renders all statistics
 
-const LFS_STATS_VERSION = '3.1.4';
+const LFS_STATS_VERSION = '3.2.1';
 
 let raceData = null;
 
@@ -1406,11 +1406,6 @@ function renderQualifyingGraph(canvas, sortedDrivers, baseColors, race) {
     };
     
     // Format time for X-axis: mm:ss
-    function formatSessionTime(seconds) {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
     
     const cc = getChartColors();
     positionChartInstance = new Chart(canvas, {
@@ -2694,11 +2689,6 @@ function renderQualifyingProgressGraph(canvas, drivers, race) {
         }
     };
     
-    function formatSessionTime(seconds) {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
     
     const datasets = sortedDrivers.map((driver, index) => {
         const color = baseColors[index % baseColors.length];
@@ -4031,7 +4021,20 @@ function renderCompareChart(stats) {
             const { ctx } = chart;
             const xScale = chart.scales.x;
             const yScale = chart.scales.y;
+
+            // Build set of hidden driver names
+            const hiddenDrivers = new Set();
+            chart.data.datasets.forEach((dataset, i) => {
+                const meta = chart.getDatasetMeta(i);
+                if (meta.hidden) {
+                    hiddenDrivers.add(dataset.label);
+                }
+            });
+
+            // Only draw markers for visible drivers
             pitMarkers.forEach(m => {
+                if (hiddenDrivers.has(m.driver)) return;
+
                 const xPixel = xScale.getPixelForValue(m.lapIndex);
                 const yPixel = yScale.getPixelForValue(m.y);
                 ctx.save();
@@ -4462,6 +4465,13 @@ function renderBestTheoreticalLap() {
 }
 
 // Helper to format lap time from seconds
+// Shared utility — declared here, used in renderGraph and renderQualifyingProgressGraph
+function formatSessionTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
 function formatLapTime(seconds) {
     const min = Math.floor(seconds / 60);
     const sec = (seconds % 60).toFixed(3);
@@ -4790,11 +4800,13 @@ function calculateLapsLed() {
     raceData.cars.forEach(driver => {
         const posArray = driver.positions || [];
         let leaderLaps = 0;
-        
+
         if (splitsPerLap > 1) {
-            // Count only at lap completion points (last timing point of each lap)
+            // Count only at lap completion points
+            // Index 0: grid, then every splitsPerLap entries = 1 lap
+            // Lap N completion is at index: (N * splitsPerLap)
             for (let lap = 1; lap <= totalLaps; lap++) {
-                const idx = lap * splitsPerLap - 1; // lap-completion index
+                const idx = lap * splitsPerLap; // lap-completion index (accounting for grid at index 0)
                 if (idx < posArray.length && posArray[idx] === 1) {
                     leaderLaps++;
                 }

@@ -80,8 +80,9 @@ namespace LFSStatistics
             }
             Directory.CreateDirectory(outputDir);
 
-            // Remove cars with 0 laps completed (e.g. relay drivers who never drove)
-            raceStatsList.RemoveAll(p => p.lap.Count == 0);
+            // Remove cars with 0 laps completed ONLY if they never started (no grid position)
+            // Keep drivers who started on grid but disconnected before completing first lap (gridPos < 999)
+            raceStatsList.RemoveAll(p => p.lap.Count == 0 && p.gridPos >= 999);
 
             raceStatsList.Sort();
 
@@ -251,18 +252,10 @@ namespace LFSStatistics
                 }
                 else
                 {
-                    long timeDiff = Math.Abs(p.totalTime - winnerFinishTime);
-                    if (timeDiff < 200000)
-                    {
-                        carEntry.status = "lapped";
-                        int lapsDown = firstMaxLap - p.lap.Count;
-                        carEntry.totalTime = "+" + lapsDown + (lapsDown == 1 ? " lap" : " laps");
-                    }
-                    else
-                    {
-                        carEntry.status = "dnf";
-                        carEntry.totalTime = "DNF";
-                    }
+                    // Has resultNum < 999 (received IS_RES), so driver finished even if lapped
+                    carEntry.status = "lapped";
+                    int lapsDown = firstMaxLap - p.lap.Count;
+                    carEntry.totalTime = "+" + lapsDown + (lapsDown == 1 ? " lap" : " laps");
                 }
 
                 // Stints (always present)

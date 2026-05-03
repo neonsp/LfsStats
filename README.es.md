@@ -1,6 +1,18 @@
-# LFS Stats v3.1.4
+# LFS Stats v3.2.1
 
 **Generador de estadísticas y visor interactivo para [Live for Speed](https://www.lfs.net/).**
+
+## Novedades (desde v3.2.0)
+
+- **Corregida visibilidad de DNF**: Los pilotos que inician en parrilla pero se desconectan antes de completar el primer split ahora aparecen correctamente en los resultados como DNF
+- Mejorado el seguimiento de posiciones de parrilla para desconexiones tempranas
+- Mejor preservación de estadísticas de pilotos al abandonar la carrera
+
+### Actualizaciones anteriores (v3.2.0)
+
+- Mejorado ordenamiento de resultados: pilotos con mismo número de vueltas ahora se ordenan por tiempo de finalización
+- Corregidos marcadores en gráfico de comparación de pilotos
+- Mejorada precisión de tiempos tras reconexiones
 
 LFS Stats se conecta a un servidor de Live for Speed (o replay) mediante InSim, captura los datos de carrera en tiempo real y los exporta como JSON. El visor web incluido renderiza gráficos interactivos, tablas y análisis a partir de los datos exportados — sin necesidad de procesamiento en servidor.
 

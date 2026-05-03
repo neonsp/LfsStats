@@ -1,11 +1,19 @@
-LFS Stats v3.0
-===============
+LFS Stats v3.2.0
+=================
 
 Statistics generator and interactive viewer for Live for Speed (https://www.lfs.net/).
 
 Connects to a LFS server (or replay) via InSim, captures race data in real time,
 and exports it as JSON. The included web viewer renders interactive charts, tables,
 and analysis — no server-side processing required.
+
+
+WHAT'S NEW (since v3.1.4)
+=========================
+
+  - Improved race results sorting: drivers with same lap count now sorted by completion time
+  - Fixed driver comparison chart markers visibility
+  - Improved timing accuracy after driver reconnections
 
 
 HOW IT WORKS

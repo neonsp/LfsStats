@@ -280,14 +280,20 @@ namespace LFSStatistics
 #if DEBUG
             LFSStats.WriteLine("Player leaves race (spectate - leaves player list)", Verbose.Info);
 #endif
-            // Preserve driver stats before PLID gets reused
+            // ALWAYS preserve driver stats when they leave (for final results if they never return)
             if (raceStat.ContainsKey(pll.PLID))
             {
                 SessionStats leavingDriver = raceStat[pll.PLID];
 
-                // Only preserve if driver has meaningful data (at least one lap or sector time)
-                if (leavingDriver.lap.Count > 0 || leavingDriver.bestLap > 0)
+                // Preserve if driver has meaningful data:
+                // - Completed laps, OR
+                // - Has a best lap time, OR
+                // - Was on starting grid (even if DNF before first split)
+                if (leavingDriver.lap.Count > 0 || leavingDriver.bestLap > 0 || leavingDriver.gridPos < 999)
                 {
+                    // Remove any old entries for this driver to prevent duplicates
+                    disconnectedDrivers.RemoveAll(d => d.userName == leavingDriver.userName);
+
                     // Clone the driver data to preserve it
                     SessionStats preservedDriver = leavingDriver.Clone();
                     preservedDriver.disconnected = true;
@@ -295,7 +301,7 @@ namespace LFSStatistics
 
                     disconnectedDrivers.Add(preservedDriver);
 
-                    LFSStats.WriteLine($"Preserved stats for {leavingDriver.userName} (PLID {pll.PLID}, {leavingDriver.lap.Count} laps)", Verbose.Info);
+                    LFSStats.WriteLine($"Preserved stats for {leavingDriver.userName} (PLID {pll.PLID}, Grid {leavingDriver.gridPos}, {leavingDriver.lap.Count} laps)", Verbose.Info);
                 }
 
                 // Now safe to remove from active list
@@ -348,6 +354,10 @@ namespace LFSStatistics
                 return;
             }
 
+            // Ignore events for drivers who already finished
+            if (raceStat[lapDec.PLID].finished)
+                return;
+
             LFSStats.WriteLine("Lap " + lapDec.LapsDone, 0, raceStat[lapDec.PLID].userName, Verbose.Lap);
 
             string sessionName = sessionInfo.session.ToString().Substring(0, 4);
@@ -396,6 +406,7 @@ namespace LFSStatistics
 
             raceStat[lapDec.PLID].UpdateLap(lapTime, raceStat[lapDec.PLID].numStop, lapDec.LapsDone, sessionInfo.maxSplit, eTime);
 
+
             // Detect overtakes at this timing point
             DetectOvertake(lapDec.PLID, lapDec.LapsDone, eTime);
         }
@@ -412,6 +423,10 @@ namespace LFSStatistics
                 return;
             }
 
+            // Ignore events for drivers who already finished
+            if (raceStat[splitdec.PLID].finished)
+                return;
+
             // Add grid timing event if this is the first timing event and gridPos is set
             bool hasGridEvent = raceStat[splitdec.PLID].timingEvents.Any(e => e.Lap == 0);
             if (!hasGridEvent && raceStat[splitdec.PLID].gridPos > 0 && raceStat[splitdec.PLID].gridPos < 999)
@@ -421,8 +436,8 @@ namespace LFSStatistics
             }
 
             long eTime = splitdec.ETime.TotalMillisecondsLong();
-            // Console.WriteLine($"DEBUG: OnSplit - {raceStat[splitdec.PLID].userName} Split {splitdec.Split} ETime={eTime}ms");
             raceStat[splitdec.PLID].UpdateSplit(splitdec.Split, splitdec.STime.TotalMillisecondsLong(), eTime);
+
             LFSStats.WriteLine("SP " + splitdec.Split, splitdec.STime.TotalMillisecondsLong(), raceStat[splitdec.PLID].userName, Verbose.Split);
 
             if (sessionInfo.maxSplit < splitdec.Split)
@@ -449,8 +464,26 @@ namespace LFSStatistics
 
             if (lplid != -1 && sessionInfo.InRace())
             {
-                LFSStats.WriteLine($"[DEBUG-RES] UName={result.UName} PLID={result.PLID} lplid={lplid} ResultNum={result.ResultNum} TTime={result.TTime} Confirm={result.Confirm} NumStops={result.NumStops}", Verbose.Info);
                 raceStat[lplid].UpdateResult(result.TTime.TotalMillisecondsLong(), result.ResultNum, result.CName, result.Confirm, result.NumStops);
+
+                // Also update in disconnectedDrivers if exists (driver may have disconnected after finishing)
+                var disc = disconnectedDrivers.Find(d => d.userName == result.UName);
+                if (disc != null)
+                {
+                    disc.UpdateResult(result.TTime.TotalMillisecondsLong(), result.ResultNum, result.CName, result.Confirm, result.NumStops);
+                }
+            }
+            // Driver finished but disconnected before IS_RES — find in disconnectedDrivers
+            else if (lplid == -1 && sessionInfo.InRace())
+            {
+                var disc = disconnectedDrivers.Find(d => d.userName == result.UName);
+                if (disc != null)
+                {
+                    disc.UpdateResult(result.TTime.TotalMillisecondsLong(), result.ResultNum, result.CName, result.Confirm, result.NumStops);
+                }
+                else
+                {
+                }
             }
 
             if (lplid != -1 && sessionInfo.InQualification())
@@ -489,7 +522,7 @@ namespace LFSStatistics
                     // Add grid timing event immediately (1ms gap per position)
                     if (raceStat[PLID].timingEvents.Count == 0)
                     {
-                        long gridETime = (gridPos - 1);
+                        long gridETime = gridPos;
                         raceStat[PLID].timingEvents.Add(new TimingEvent(0, 0, gridETime));
                         // Console.WriteLine($"OnReorder: Added GRID timing event for {raceStat[PLID].userName}: GridPos {gridPos}, ETime={gridETime}ms");
                     }
@@ -940,9 +973,19 @@ namespace LFSStatistics
             {
                 if (disconnectedDrivers[i].userName == newPlayerUserName)
                 {
-                    restoredDriver = disconnectedDrivers[i];
-                    disconnectedDrivers.RemoveAt(i);
-                    LFSStats.WriteLine($"Restoring stats for {newPlayerUserName} (was disconnected)", Verbose.Info);
+                    // Only restore if preserveLapsOnPit is enabled
+                    if (preserveLapsOnPit)
+                    {
+                        restoredDriver = disconnectedDrivers[i];
+                        disconnectedDrivers.RemoveAt(i);
+                        LFSStats.WriteLine($"Restoring stats for {newPlayerUserName} (was disconnected, preserveLapsOnPit=ON)", Verbose.Info);
+                    }
+                    else
+                    {
+                        // Keep in disconnectedDrivers but don't restore (start fresh)
+                        // If they don't complete any new laps, their original result will be used in final export
+                        LFSStats.WriteLine($"Not restoring stats for {newPlayerUserName} (preserveLapsOnPit=OFF, starting fresh but keeping backup)", Verbose.Info);
+                    }
                     break;
                 }
             }
@@ -1062,7 +1105,7 @@ namespace LFSStatistics
                 // Add grid timing event immediately (1ms gap per position)
                 if (raceStat[newPlayer.PLID].timingEvents.Count == 0)
                 {
-                    long gridETime = (gridPos - 1);
+                    long gridETime = gridPos;
                     raceStat[newPlayer.PLID].timingEvents.Add(new TimingEvent(0, 0, gridETime));
                     // Console.WriteLine($"NewPlayer: Added GRID timing event for {nplUserName}: GridPos {gridPos}, ETime={gridETime}ms");
                 }
@@ -1202,7 +1245,34 @@ namespace LFSStatistics
             Task exportTask;
             // Combine active drivers and disconnected drivers for complete results
             List<SessionStats> tmpList = new List<SessionStats>(raceStat.Values);
-            tmpList.AddRange(disconnectedDrivers);
+
+            // Add disconnected drivers with smart logic
+            foreach (var disc in disconnectedDrivers)
+            {
+                var activeDriver = tmpList.FirstOrDefault(d => d.userName == disc.userName);
+                if (activeDriver != null)
+                {
+                    // Driver exists in both lists
+                    if (activeDriver.lap.Count == 0 && disc.lap.Count > 0)
+                    {
+                        // Active has 0 laps (returned but didn't drive) - use disconnected
+                        tmpList.Remove(activeDriver);
+                        tmpList.Add(disc);
+                        LFSStats.WriteLine($"Using disconnected stats for {disc.userName} ({disc.lap.Count} laps) - active has 0 laps (didn't drive after return)", Verbose.Info);
+                    }
+                    else
+                    {
+                        // Active has laps - it's the most recent state, use it
+                        LFSStats.WriteLine($"Using active stats for {disc.userName} ({activeDriver.lap.Count} laps) - most recent state", Verbose.Info);
+                    }
+                }
+                else
+                {
+                    // Driver only in disconnectedDrivers - they never returned
+                    tmpList.Add(disc);
+                }
+            }
+
             SessionInfo tmpSessionInfo = new SessionInfo(sessionInfo);
 #if DEBUG
             sw.Start();
@@ -1234,7 +1304,34 @@ namespace LFSStatistics
             Task exportTask;
             // Combine active drivers and disconnected drivers for complete results
             List<SessionStats> tmpList = new List<SessionStats>(raceStat.Values);
-            tmpList.AddRange(disconnectedDrivers);
+
+            // Add disconnected drivers with smart logic
+            foreach (var disc in disconnectedDrivers)
+            {
+                var activeDriver = tmpList.FirstOrDefault(d => d.userName == disc.userName);
+                if (activeDriver != null)
+                {
+                    // Driver exists in both lists
+                    if (activeDriver.lap.Count == 0 && disc.lap.Count > 0)
+                    {
+                        // Active has 0 laps (returned but didn't drive) - use disconnected
+                        tmpList.Remove(activeDriver);
+                        tmpList.Add(disc);
+                        LFSStats.WriteLine($"Using disconnected stats for {disc.userName} ({disc.lap.Count} laps) - active has 0 laps (didn't drive after return)", Verbose.Info);
+                    }
+                    else
+                    {
+                        // Active has laps - it's the most recent state, use it
+                        LFSStats.WriteLine($"Using active stats for {disc.userName} ({activeDriver.lap.Count} laps) - most recent state", Verbose.Info);
+                    }
+                }
+                else
+                {
+                    // Driver only in disconnectedDrivers - they never returned
+                    tmpList.Add(disc);
+                }
+            }
+
             SessionInfo tmpSessionInfo = new SessionInfo(sessionInfo);
 #if DEBUG
             sw.Start();
@@ -1307,9 +1404,6 @@ namespace LFSStatistics
         }
 
 
-        /// <summary>
-        /// Detects overtakes at the current timing point by comparing positions
-        /// </summary>
         private void DetectOvertake(int PLID, int lap, long eTime)
         {
             if (!raceStat.ContainsKey(PLID))

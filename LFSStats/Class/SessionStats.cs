@@ -570,30 +570,40 @@ namespace LFSStatistics
         }
 
         /// <summary>
-        /// Custom sort: DNF (resultNum=999) last, then by laps desc, then totalTime asc.
-        /// LFS resultNum is unreliable with disconnect/reconnect.
+        /// Custom sort: First by laps completed, then by cumulative time (chronological completion).
+        /// This ensures drivers who completed more laps rank higher, and among same lap count,
+        /// whoever completed their last lap first ranks higher (regardless of DNF/lapped status).
         /// </summary>
         private static int CompareResult(SessionStats x, SessionStats y)
         {
-            // DNF (no IS_RES received) always last
-            bool xDnf = x.resultNum >= 999;
-            bool yDnf = y.resultNum >= 999;
-            if (xDnf != yDnf)
-                return xDnf ? 1 : -1;
-
-            // Penalized drivers (998) after normal finishers
+            // Penalized drivers (998) always go after normal finishers/lapped/DNF
             bool xPen = x.resultNum == 998;
             bool yPen = y.resultNum == 998;
             if (xPen != yPen)
                 return xPen ? 1 : -1;
 
-            // More laps = better
+            // Primary sort: More laps = better (applies to everyone: finishers, lapped, DNF)
             if (y.lap.Count != x.lap.Count)
                 return y.lap.Count > x.lap.Count ? 1 : -1;
 
-            // Same laps: lower totalTime = better
-            if (x.totalTime != y.totalTime)
-                return x.totalTime < y.totalTime ? -1 : 1;
+            // Same lap count: sort by cumulative time (who completed their last lap first)
+            // Use totalTime if available (from IS_RES), otherwise use cumuledTime
+            long xTime = x.totalTime > 0 ? x.totalTime : x.cumuledTime;
+            long yTime = y.totalTime > 0 ? y.totalTime : y.cumuledTime;
+
+            if (xTime > 0 && yTime > 0 && xTime != yTime)
+                return xTime < yTime ? -1 : 1;
+
+            // Final tiebreaker: use resultNum if both have official results
+            bool xHasResult = x.resultNum < 999 && x.resultNum != 998;
+            bool yHasResult = y.resultNum < 999 && y.resultNum != 998;
+
+            if (xHasResult && yHasResult && x.resultNum != y.resultNum)
+                return x.resultNum < y.resultNum ? -1 : 1;
+
+            // Last resort: sort by grid position (for DNFs with 0 laps or other ties)
+            if (x.gridPos != y.gridPos && x.gridPos < 999 && y.gridPos < 999)
+                return x.gridPos < y.gridPos ? -1 : 1;
 
             return 0;
         }
