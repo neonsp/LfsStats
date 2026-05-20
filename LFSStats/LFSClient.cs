@@ -730,7 +730,7 @@ namespace LFSStatistics
         private void OnHotlapValidity(InSimDotNet.InSim insim, IS_HLV hlv)
         {
             // Track off-track incidents (invalidated laps)
-            if (raceStat.ContainsKey(hlv.PLID))
+            if (raceStat.ContainsKey(hlv.PLID) && !raceStat[hlv.PLID].finished)
             {
                 raceStat[hlv.PLID].offTracks++;
 #if DEBUG
@@ -744,11 +744,19 @@ namespace LFSStatistics
             if (!raceStat.ContainsKey(toc.PLID))
                 return;
 
+            if (raceStat[toc.PLID].finished)
+            {
+                PLIDToUCID[toc.PLID] = toc.NewUCID;
+                return;
+            }
+
             sessionInfo.isToc = true;
 
             int OldPLID = UCIDToPLID(toc.NewUCID);
             PLIDToUCID.Remove(OldPLID);
             raceStat.Remove(OldPLID);
+
+            PLIDToUCID[toc.PLID] = toc.NewUCID;
 
             string oldUserName = raceStat[toc.PLID].userName;
             string oldNickName = raceStat[toc.PLID].NickName;
@@ -764,7 +772,6 @@ namespace LFSStatistics
             string newNickName = raceStat[toc.PLID].NickName;
 
             raceStat[toc.PLID].updateTOC(oldNickName, oldUserName, newNickName, newUserName);
-            PLIDToUCID[toc.PLID] = toc.NewUCID;
 
             LFSStats.WriteLine("TOC", oldUserName + " --> " + newUserName, Verbose.Info);
         }

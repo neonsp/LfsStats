@@ -711,8 +711,8 @@ function renderResults() {
                     const driverLink = getDriverLink(d);
                     
                     const bestParsed = parseLapTime(d.bestLapTime);
-                    const isFastest = bestParsed < 3599 && Math.abs(bestParsed - fastestLapTime) < 0.001;
-                    const hasValidBest = bestParsed < 3599;
+                    const isFastest = bestParsed > 0 && bestParsed < 3599 && Math.abs(bestParsed - fastestLapTime) < 0.001;
+                    const hasValidBest = bestParsed > 0 && bestParsed < 3599;
                     const driverWR = hasValidBest && raceData.worldRecords ? raceData.worldRecords[d.car] : null;
                     const wrGapStr = driverWR ? formatWRGap(bestParsed - parseLapTime(driverWR.lapTime)) : '';
 
@@ -724,7 +724,7 @@ function renderResults() {
                             ${!isQual ? `<td class="status-${d.status}">${translateStatus(d.status)}</td>` : ''}
                             <td>${d.lapsCompleted}</td>
                             ${!isQual ? `<td>${d.totalTime}</td>` : ''}
-                            <td${isFastest ? ' style="color: #A855F7; font-weight: bold;"' : ''}>${hasValidBest ? d.bestLapTime : '-'}${hasValidBest && d.bestLapNumber != null ? ` <small>(${t('lapLabel')}${d.bestLapNumber})</small>` : ''}${isFastest ? ' ★' : ''}${wrGapStr ? `<br><span class="wr-gap">WR ${wrGapStr}</span>` : ''}</td>
+                            <td${isFastest ? ' style="color: #A855F7; font-weight: bold;"' : ''}>${hasValidBest ? d.bestLapTime : `<span style="color:#888">${t('noLap')}</span>`}${hasValidBest && d.bestLapNumber != null ? ` <small>(${t('lapLabel')}${d.bestLapNumber})</small>` : ''}${isFastest ? ' ★' : ''}${wrGapStr ? `<br><span class="wr-gap">WR ${wrGapStr}</span>` : ''}</td>
                             <td>${d.pitStops.length}</td>
                             <td>${incidentsStr}</td>
                             ${!isQual ? `<td>${d.gridPosition}</td>` : ''}
@@ -3534,7 +3534,7 @@ function renderProgressGraph() {
 }
 function renderBestTimes() {
     const bestLaps = [...raceData.cars]
-        .filter(d => d.bestLapTime && d.bestLapTime !== 'DNF' && parseLapTime(d.bestLapTime) < 3599)
+        .filter(d => d.bestLapTime && d.bestLapTime !== 'DNF' && parseLapTime(d.bestLapTime) > 0 && parseLapTime(d.bestLapTime) < 3599)
         .sort((a, b) => parseLapTime(a.bestLapTime) - parseLapTime(b.bestLapTime));
     
     // Check if we have any WR data
