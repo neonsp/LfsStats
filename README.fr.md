@@ -1,8 +1,12 @@
-# LFS Stats v3.2.1
+# LFS Stats v3.2.4
 
 **Générateur de statistiques et visualiseur interactif pour [Live for Speed](https://www.lfs.net/).**
 
-## Nouveautés (depuis v3.2.0)
+## Nouveautés (depuis v3.2.3)
+
+- **Correction du tri en qualifications** : Les pilotes sans temps valide (0 tour complété) n'apparaissent plus en première position dans les résultats de qualifications
+
+### Mises à jour précédentes (v3.2.1)
 
 - **Correction de la visibilité des DNF** : Les pilotes qui démarrent sur la grille mais se déconnectent avant de compléter le premier split apparaissent maintenant correctement dans les résultats comme DNF
 - Amélioration du suivi des positions de grille pour les déconnexions précoces

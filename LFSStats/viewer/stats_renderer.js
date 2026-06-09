@@ -1,7 +1,7 @@
 ﻿// LFS Stats Viewer - Complete JavaScript Renderer
 // Reads JSON and renders all statistics
 
-const LFS_STATS_VERSION = '3.2.1';
+const LFS_STATS_VERSION = '3.2.4';
 
 let raceData = null;
 
@@ -512,7 +512,7 @@ function renderSummaryCard() {
     // Winner / Pole
     let winnerCar;
     if (isQual) {
-        winnerCar = [...cars].sort((a, b) => parseLapTime(a.bestLapTime) - parseLapTime(b.bestLapTime))[0];
+        winnerCar = sortQualCars(cars)[0];
     } else {
         winnerCar = cars.find(c => c.position === 1) || cars[0];
     }
@@ -692,8 +692,8 @@ function renderResults() {
                 </tr>
             </thead>
             <tbody>
-                ${(isQual 
-                    ? [...raceData.cars].sort((a, b) => parseLapTime(a.bestLapTime) - parseLapTime(b.bestLapTime))
+                ${(isQual
+                    ? sortQualCars(raceData.cars)
                     : raceData.cars
                 ).map((d, idx) => {
                     const displayPos = isQual ? idx + 1 : d.position;
@@ -1685,7 +1685,7 @@ function renderHeatmap() {
 
     const isQual = raceData.session && raceData.session.type === 'qual';
     const cars = isQual
-        ? [...raceData.cars].sort((a, b) => parseLapTime(a.bestLapTime) - parseLapTime(b.bestLapTime))
+        ? sortQualCars(raceData.cars)
         : [...raceData.cars];
 
     // Find max laps
@@ -1895,10 +1895,20 @@ function renderGraph() {
         const color = baseColors[index % baseColors.length];
         const isDNF = driver.status === 'dnf';
         
-        // Truncate positions after DNF (replace with null after last completed lap)
-        if (isDNF && driver.lapsCompleted > 0) {
-            const lastValidIndex = driver.lapsCompleted * pointsPerLap;
-            driverPositions = driverPositions.map((v, i) => i <= lastValidIndex ? v : null);
+        // Truncate positions after DNF (replace with null after last valid data point)
+        if (isDNF && driverPositions.length > 0) {
+            // Use the actual length of positions array - it already reflects where the driver stopped
+            // No need to truncate, the C# code already provides correct data length
+            // Just ensure we don't extend beyond the driver's actual data
+            const actualLength = driverPositions.length;
+
+            // Pad with null if this driver has fewer timing points than others
+            if (actualLength < totalTimingPoints) {
+                driverPositions = [
+                    ...driverPositions,
+                    ...Array(totalTimingPoints - actualLength).fill(null)
+                ];
+            }
         }
         
         return {
@@ -1976,11 +1986,11 @@ function renderGraph() {
                 // Draw DNF marker (X) at last valid position
                 if (markerVisibility.dnf && driver.status === 'dnf') {
                     const driverPositions = dataset.data;
-                    
+
                     // Find last valid position (> 0)
                     let lastValidIndex = -1;
                     let lastValidPosition = 0;
-                    
+
                     for (let i = driverPositions.length - 1; i >= 0; i--) {
                         if (driverPositions[i] && driverPositions[i] > 0) {
                             lastValidIndex = i;
@@ -1988,17 +1998,17 @@ function renderGraph() {
                             break;
                         }
                     }
-                    
+
                     if (lastValidIndex >= 0) {
                         const x = xScale.getPixelForValue(lastValidIndex);
                         const y = yScale.getPixelForValue(lastValidPosition);
-                        
-                        // Draw red X
+
+                        // Draw X with driver's line color
                         ctx.save();
-                        ctx.strokeStyle = '#FF0000';
+                        ctx.strokeStyle = color;
                         ctx.lineWidth = 3;
                         ctx.lineCap = 'round';
-                        
+
                         const size = 8;
                         ctx.beginPath();
                         ctx.moveTo(x - size, y - size);
@@ -3122,17 +3132,17 @@ function renderProgressGraph() {
                             break;
                         }
                     }
-                    
+
                     if (lastGapData && lastGapData.y !== null && lastGapData.y !== undefined) {
                         const x = xScale.getPixelForValue(lastGapData.x);
                         const y = yScale.getPixelForValue(lastGapData.y);
-                        
-                        // Draw red X
+
+                        // Draw X with driver's line color
                         ctx.save();
-                        ctx.strokeStyle = '#FF0000';
+                        ctx.strokeStyle = color;
                         ctx.lineWidth = 3;
                         ctx.lineCap = 'round';
-                        
+
                         const size = 8;
                         ctx.beginPath();
                         ctx.moveTo(x - size, y - size);
@@ -3708,7 +3718,7 @@ function renderCompare() {
 
     // Build driver options sorted by position
     const sorted = isQual
-        ? [...cars].sort((a, b) => parseLapTime(a.bestLapTime) - parseLapTime(b.bestLapTime))
+        ? sortQualCars(cars)
         : [...cars];
 
     // Build driver data for custom dropdowns
@@ -5131,6 +5141,19 @@ function parseLapTime(timeStr) {
         return parseInt(min) * 60 + parseFloat(sec);
     }
     return parseFloat(timeStr);
+}
+
+function sortQualCars(cars) {
+    return [...cars].sort((a, b) => {
+        const ta = parseLapTime(a.bestLapTime);
+        const tb = parseLapTime(b.bestLapTime);
+        const validA = ta > 0 && ta < 3599;
+        const validB = tb > 0 && tb < 3599;
+        if (validA && validB) return ta - tb;
+        if (validA) return -1;
+        if (validB) return 1;
+        return 0;
+    });
 }
 
 function formatGapValue(seconds) {

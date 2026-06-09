@@ -1,8 +1,12 @@
-# LFS Stats v3.2.1
+# LFS Stats v3.2.4
 
 **Generador de estadísticas y visor interactivo para [Live for Speed](https://www.lfs.net/).**
 
-## Novedades (desde v3.2.0)
+## Novedades (desde v3.2.3)
+
+- **Corregido orden en clasificación**: Los pilotos sin tiempo válido (0 vueltas completadas) ya no aparecen en primera posición en los resultados de clasificación
+
+### Actualizaciones anteriores (v3.2.1)
 
 - **Corregida visibilidad de DNF**: Los pilotos que inician en parrilla pero se desconectan antes de completar el primer split ahora aparecen correctamente en los resultados como DNF
 - Mejorado el seguimiento de posiciones de parrilla para desconexiones tempranas

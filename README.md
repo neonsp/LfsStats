@@ -1,8 +1,12 @@
-# LFS Stats v3.2.1
+# LFS Stats v3.2.4
 
 **Statistics generator and interactive viewer for [Live for Speed](https://www.lfs.net/).**
 
-## What's New (since v3.2.0)
+## What's New (since v3.2.3)
+
+- **Fixed qualifying sort**: Drivers with no valid lap time (0 laps completed) no longer appear at the top of qualifying results
+
+### Previous updates (v3.2.1)
 
 - **Fixed DNF visibility**: Drivers who start on the grid but disconnect before completing their first split now correctly appear in results as DNF
 - Improved grid position tracking for early disconnections

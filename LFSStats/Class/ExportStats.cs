@@ -622,10 +622,26 @@ namespace LFSStatistics
                         driversAtPoint.Add((driver.userName, evt.ETime, finalPositionIndex[driver.userName]));
                         maxETimePerDriver[driver.userName] = evt.ETime;
                     }
+                    // Special case: Grid timing point (L0S0) - add ALL drivers even if they joined late
+                    else if (timingPoint.lap == 0 && timingPoint.split == 0 && evt == null)
+                    {
+                        // Driver joined late, wasn't on starting grid
+                        // Use gridPos as fictional ETime (in milliseconds) - this places them at the end
+                        // but with a realistic low value that won't conflict with real timing events
+                        // (gridPos is typically 999 for late joiners, which is ~1 second, much less than real ETimes)
+                        long fictionalETime = driver.gridPos;
+                        driversAtPoint.Add((driver.userName, fictionalETime, finalPositionIndex[driver.userName]));
+                        // Note: Don't update maxETimePerDriver since this is fictional - it stays at 0
+                        // so the first real timing event will be accepted
+                    }
                 }
 
-                // Sort by ETime, use final position as tiebreaker
-                var sortedDrivers = driversAtPoint.OrderBy(d => d.eTime).ThenBy(d => d.finalPosIndex).ToList();
+                // Sort by ETime, use final position as tiebreaker, then userName for deterministic ordering
+                var sortedDrivers = driversAtPoint
+                    .OrderBy(d => d.eTime)
+                    .ThenBy(d => d.finalPosIndex)
+                    .ThenBy(d => d.userName)
+                    .ToList();
 
                 for (int pos = 0; pos < sortedDrivers.Count; pos++)
                 {
