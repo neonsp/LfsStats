@@ -1,22 +1,19 @@
-# LFS Stats v3.2.4
+# LFS Stats v3.3.1
 
 **Generador de estadísticas y visor interactivo para [Live for Speed](https://www.lfs.net/).**
 
-## Novedades (desde v3.2.3)
+## Novedades (desde v3.2.4)
+
+- **Seguimiento de resets de coche**: Los resets de coche (🔄) de cada piloto se registran ahora — visibles en la columna de incidentes, en una tabla clasificada en la pestaña de incidentes y en un badge de resumen
+- **Soporte para pilotos IA**: Los pilotos IA aparecen correctamente en los resultados con un badge 🤖; los enlaces al perfil de LFSWorld se ocultan para los pilotos IA
+- **Dependencias actualizadas**: InSimDotNet actualizado a 2.9.4.1; proyecto migrado a csproj SDK-style
+
+### Actualizaciones anteriores (v3.2.4)
 
 - **Corregido orden en clasificación**: Los pilotos sin tiempo válido (0 vueltas completadas) ya no aparecen en primera posición en los resultados de clasificación
-
-### Actualizaciones anteriores (v3.2.1)
-
 - **Corregida visibilidad de DNF**: Los pilotos que inician en parrilla pero se desconectan antes de completar el primer split ahora aparecen correctamente en los resultados como DNF
 - Mejorado el seguimiento de posiciones de parrilla para desconexiones tempranas
 - Mejor preservación de estadísticas de pilotos al abandonar la carrera
-
-### Actualizaciones anteriores (v3.2.0)
-
-- Mejorado ordenamiento de resultados: pilotos con mismo número de vueltas ahora se ordenan por tiempo de finalización
-- Corregidos marcadores en gráfico de comparación de pilotos
-- Mejorada precisión de tiempos tras reconexiones
 
 LFS Stats se conecta a un servidor de Live for Speed (o replay) mediante InSim, captura los datos de carrera en tiempo real y los exporta como JSON. El visor web incluido renderiza gráficos interactivos, tablas y análisis a partir de los datos exportados — sin necesidad de procesamiento en servidor.
 
@@ -336,7 +333,7 @@ LFS Stats/
 
 | Paquete | Versión | Propósito |
 |---------|---------|-----------|
-| [InSimDotNet](https://github.com/alexmcbride/insimdotnet) | 2.7.2.1 | Librería del protocolo InSim de LFS |
+| [InSimDotNet](https://github.com/alexmcbride/insimdotnet) | 2.9.4.1 | Librería del protocolo InSim de LFS |
 | [Newtonsoft.Json](https://www.nuget.org/packages/Newtonsoft.Json) | 13.0.4 | Serialización JSON |
 | [Chart.js](https://www.chartjs.org/) | 4.x | Gráficos interactivos (CDN, solo visor) |
 | [chartjs-plugin-zoom](https://www.chartjs.org/chartjs-plugin-zoom/) | 2.x | Zoom y pan (CDN, solo visor) |

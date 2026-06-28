@@ -1,7 +1,7 @@
 ﻿// LFS Stats Viewer - Complete JavaScript Renderer
 // Reads JSON and renders all statistics
 
-const LFS_STATS_VERSION = '3.2.4';
+const LFS_STATS_VERSION = '3.3.1';
 
 let raceData = null;
 
@@ -242,11 +242,14 @@ function loadLocalFile(file) {
 function initializeData() {
     if (!raceData) return;
     
-    const players = raceData.players; // array of { username, name, nameColored }
-    
+    const players = raceData.players; // array of { username, name, nameColored, isAI? }
+
     // Helper: resolve player index to player object
     const getPlayer = (idx) => players[idx] || { username: '?', name: '?', nameColored: '?' };
     raceData.getPlayer = getPlayer;
+
+    // Build AI username set for quick lookup (backward compatible: older JSONs have no isAI field)
+    raceData.aiUsernames = new Set(players.filter(p => p.isAI).map(p => p.username));
     
     // Enrich cars with display names from players array
     raceData.cars.forEach(car => {
@@ -534,6 +537,10 @@ function renderSummaryCard() {
     const mostContacts = [...cars].sort((a, b) => (b.incidents?.contacts || 0) - (a.incidents?.contacts || 0))[0];
     const mostContactsVal = mostContacts ? (mostContacts.incidents?.contacts || 0) : 0;
 
+    // Most resets
+    const mostResets = [...cars].sort((a, b) => (b.resets?.length || 0) - (a.resets?.length || 0))[0];
+    const mostResetsVal = mostResets ? (mostResets.resets?.length || 0) : 0;
+
     // DNFs
     const dnfCount = cars.filter(c => c.status === 'dnf').length;
 
@@ -645,6 +652,16 @@ function renderSummaryCard() {
         </div>`;
     }
 
+    // 10. Most resets
+    if (mostResetsVal > 0) {
+        cards += `<div class="summary-stat" ${sc('incidents')}>
+            <span class="stat-icon">🔄</span>
+            <span class="stat-value">${mostResetsVal}</span>
+            <span class="stat-label">${t('resets')}</span>
+            <span class="stat-detail">${driverLink(mostResets)}</span>
+        </div>`;
+    }
+
     container.innerHTML = `<div class="summary-card">${cards}</div>`;
 
     // Click handler: activate tab and scroll to section
@@ -702,6 +719,8 @@ function renderResults() {
                     if (d.incidents.yellowFlags > 0) incidents.push(`<span title="${t('yellowFlags')}">⚠️ ${d.incidents.yellowFlags}</span>`);
                     if (d.incidents.blueFlags > 0) incidents.push(`<span title="${t('blueFlags')}">🔵 ${d.incidents.blueFlags}</span>`);
                     if (d.incidents.contacts > 0) incidents.push(`<span title="${t('contacts')}">💥 ${d.incidents.contacts}</span>`);
+                    const resetCount = (d.resets || []).length;
+                    if (resetCount > 0) incidents.push(`<span title="${t('resets')}">🔄 ${resetCount}</span>`);
                     const incidentsStr = incidents.length > 0 ? incidents.join(' | ') : '';
                     
                     // Build car link with image
@@ -919,7 +938,10 @@ function renderStints() {
         html += `</tr></thead><tbody>`;
         d.stints.forEach((stint, idx) => {
             const laps = stint.toLap - stint.fromLap + 1;
-            const driverLink = `<a href="https://www.lfsworld.net/?win=stats&racer=${encodeURIComponent(stint.username)}" target="_blank" class="link-driver">${stint.nameColored ? parseLFSColors(stint.nameColored) : escapeHtml(stint.name)}</a>`;
+            const stintName = stint.nameColored ? parseLFSColors(stint.nameColored) : escapeHtml(stint.name);
+            const driverLink = isAIUsername(stint.username)
+                ? `<span class="link-driver">${stintName}</span>`
+                : `<a href="https://www.lfsworld.net/?win=stats&racer=${encodeURIComponent(stint.username)}" target="_blank" class="link-driver">${stintName}</a>`;
             html += `<tr><td>${idx + 1}</td><td>${driverLink}</td><td>${t('lapLabel')}${stint.fromLap}</td><td>${t('lapLabel')}${stint.toLap}</td><td>${laps}</td></tr>`;
         });
         html += `</tbody></table>`;
@@ -930,7 +952,10 @@ function renderStints() {
         driverOrder.forEach(username => {
             const info = driverSummary[username];
             const pct = totalLaps > 0 ? (info.totalLaps / totalLaps * 100).toFixed(1) : '0.0';
-            const driverLink = `<a href="https://www.lfsworld.net/?win=stats&racer=${encodeURIComponent(info.username)}" target="_blank" class="link-driver">${info.nameColored ? parseLFSColors(info.nameColored) : escapeHtml(info.name)}</a>`;
+            const infoName = info.nameColored ? parseLFSColors(info.nameColored) : escapeHtml(info.name);
+            const driverLink = isAIUsername(info.username)
+                ? `<span class="link-driver">${infoName}</span>`
+                : `<a href="https://www.lfsworld.net/?win=stats&racer=${encodeURIComponent(info.username)}" target="_blank" class="link-driver">${infoName}</a>`;
             html += `<tr><td>${driverLink}</td><td>${info.totalLaps}</td><td>${pct}%</td></tr>`;
         });
         html += `</tbody></table>`;
@@ -4157,15 +4182,19 @@ function renderIncidents() {
     const yellowFlags = [...raceData.cars]
         .filter(d => d.incidents.yellowFlags > 0)
         .sort((a, b) => b.incidents.yellowFlags - a.incidents.yellowFlags);
-    
+
     const blueFlags = [...raceData.cars]
         .filter(d => d.incidents.blueFlags > 0)
         .sort((a, b) => b.incidents.blueFlags - a.incidents.blueFlags);
-    
+
     const contacts = [...raceData.cars]
         .filter(d => d.incidents.contacts > 0)
         .sort((a, b) => b.incidents.contacts - a.incidents.contacts);
-    
+
+    const resets = [...raceData.cars]
+        .filter(d => (d.resets || []).length > 0)
+        .sort((a, b) => (b.resets || []).length - (a.resets || []).length);
+
     const penalties = raceData.cars.filter(d => d.penalties && d.penalties.length > 0);
     
     const html = `
@@ -4237,6 +4266,32 @@ function renderIncidents() {
                 </table>
             </div>
             
+            ${resets.length > 0 ? `
+            <div class="section-box">
+                <h3>🔄 ${t("resets")}</h3>
+                <table class="compact-table">
+                    <thead>
+                        <tr>
+                            <th>${t("rank")}</th>
+                            <th>${t("driver")}</th>
+                            <th>${t("count")}</th>
+                            <th>${t("laps")}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${resets.map((d, i) => `
+                            <tr>
+                                <td>${i + 1}</td>
+                                <td>${getDriverLink(d)}</td>
+                                <td class="text-info">${d.resets.length}</td>
+                                <td><small>${d.resets.map(r => `${t('lapLabel')}${r.lap}`).join(', ')}</small></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ` : ''}
+
             <div class="section-box">
                 <h3>⚠️ ${t("penalties")}</h3>
                 ${penalties.length > 0 ? `
@@ -5084,6 +5139,10 @@ function getCarHtml(carName) {
     return `<a href="${linkUrl}" target="_blank" class="link-primary">${carName}</a>`;
 }
 
+function isAIUsername(username) {
+    return username && raceData.aiUsernames && raceData.aiUsernames.has(username);
+}
+
 function getDriverLink(driver) {
     // If car has multiple drivers (stints/relays), show all
     if (driver.stints && driver.stints.length > 0) {
@@ -5093,12 +5152,16 @@ function getDriverLink(driver) {
             if (!seen.has(stint.username)) {
                 seen.add(stint.username);
                 const name = stint.nameColored ? parseLFSColors(stint.nameColored) : escapeHtml(stint.name);
-                uniqueDrivers.push(`<a href="https://www.lfsworld.net/?win=stats&racer=${encodeURIComponent(stint.username)}" target="_blank" class="link-driver">${name}</a>`);
+                uniqueDrivers.push(isAIUsername(stint.username)
+                    ? `<span class="link-driver">${name} <span class="ai-badge" title="AI">🤖</span></span>`
+                    : `<a href="https://www.lfsworld.net/?win=stats&racer=${encodeURIComponent(stint.username)}" target="_blank" class="link-driver">${name}</a>`);
             }
         }
         return uniqueDrivers.join(' <span class="relay-separator">/</span> ');
     }
     const displayName = driver.nameColored ? parseLFSColors(driver.nameColored) : escapeHtml(driver.name);
+    if (isAIUsername(driver.username))
+        return `<span class="link-driver">${displayName} <span class="ai-badge" title="AI">🤖</span></span>`;
     return `<a href="https://www.lfsworld.net/?win=stats&racer=${encodeURIComponent(driver.username)}" target="_blank" class="link-driver">${displayName}</a>`;
 }
 
@@ -5117,6 +5180,8 @@ function getDriverLinkByIndex(playerIdx) {
     const car = raceData.cars.find(d => d.username === p.username);
     if (car) return getDriverLink(car);
     const coloredName = p.nameColored ? parseLFSColors(p.nameColored) : escapeHtml(p.name);
+    if (isAIUsername(p.username))
+        return `<span class="link-driver">${coloredName}</span>`;
     return `<a href="https://www.lfsworld.net/?win=stats&racer=${encodeURIComponent(p.username)}" target="_blank" class="link-driver">${coloredName}</a>`;
 }
 
@@ -5126,6 +5191,8 @@ function getDriverLinkFromLapLed(lapLedEntry) {
     if (driver) {
         return getDriverLink(driver);
     }
+    if (isAIUsername(lapLedEntry.username))
+        return `<span class="link-driver">${escapeHtml(lapLedEntry.name)}</span>`;
     return `<a href="https://www.lfsworld.net/?win=stats&racer=${encodeURIComponent(lapLedEntry.username)}" target="_blank" class="link-driver">${escapeHtml(lapLedEntry.name)}</a>`;
 }
 
@@ -5199,6 +5266,8 @@ function getSingleDriverLink(playerIdx) {
     const p = raceData.getPlayer(playerIdx);
     if (!p) return '?';
     const coloredName = p.nameColored ? parseLFSColors(p.nameColored) : escapeHtml(p.name);
+    if (isAIUsername(p.username))
+        return `<span class="link-driver">${coloredName}</span>`;
     return `<a href="https://www.lfsworld.net/?win=stats&racer=${encodeURIComponent(p.username)}" target="_blank" class="link-driver">${coloredName}</a>`;
 }
 

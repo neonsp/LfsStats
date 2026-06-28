@@ -205,6 +205,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "Blue Flags",
         contacts: "Contacts",
+        resets: "Resets",
         offTrack: "Off Track",
         penalties: "Penalties",
         yellowFlags: "Yellow Flags",
@@ -425,6 +426,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "Banderas Azules",
         contacts: "Contactos",
+        resets: "Reinicios",
         offTrack: "Fuera de Pista",
         penalties: "Penalizaciones",
         yellowFlags: "Banderas Amarillas",
@@ -645,6 +647,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "Drapeaux Bleus",
         contacts: "Contacts",
+        resets: "Réinitialisations",
         offTrack: "Hors Piste",
         penalties: "Pénalités",
         yellowFlags: "Drapeaux Jaunes",
@@ -865,6 +868,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "Bandeiras Azuis",
         contacts: "Contatos",
+        resets: "Reinícios",
         offTrack: "Fora da Pista",
         penalties: "Penalidades",
         yellowFlags: "Bandeiras Amarelas",
@@ -1085,6 +1089,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "Blaue Flaggen",
         contacts: "Kontakte",
+        resets: "Zurücksetzen",
         offTrack: "Neben der Strecke",
         penalties: "Strafen",
         yellowFlags: "Gelbe Flaggen",
@@ -1305,6 +1310,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "Bandiere Blu",
         contacts: "Contatti",
+        resets: "Reset",
         offTrack: "Fuori Pista",
         penalties: "Penalità",
         yellowFlags: "Bandiere Gialle",
@@ -1525,6 +1531,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "Niebieskie flagi",
         contacts: "Kontakty",
+        resets: "Resety",
         offTrack: "Poza torem",
         penalties: "Kary",
         yellowFlags: "Żółte flagi",
@@ -1745,6 +1752,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "Синие флаги",
         contacts: "Контакты",
+        resets: "Сбросы",
         offTrack: "За пределами трассы",
         penalties: "Штрафы",
         yellowFlags: "Жёлтые флаги",
@@ -1965,6 +1973,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "Mavi Bayraklar",
         contacts: "Temaslar",
+        resets: "Sıfırlamalar",
         offTrack: "Pist Dışı",
         penalties: "Cezalar",
         yellowFlags: "Sarı Bayraklar",
@@ -2185,6 +2194,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "Siniset liput",
         contacts: "Kontaktit",
+        resets: "Nollaukset",
         offTrack: "Radan ulkopuolella",
         penalties: "Rangaistukset",
         yellowFlags: "Keltaiset liput",
@@ -2405,6 +2415,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "Blå flaggor",
         contacts: "Kontakter",
+        resets: "Återställningar",
         offTrack: "Utanför banan",
         penalties: "Straff",
         yellowFlags: "Gula flaggor",
@@ -2625,6 +2636,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "Mėlynos vėliavos",
         contacts: "Kontaktai",
+        resets: "Atstatymai",
         offTrack: "Už trasos ribų",
         penalties: "Baudos",
         yellowFlags: "Geltonos vėliavos",
@@ -2845,6 +2857,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "ブルーフラッグ",
         contacts: "接触",
+        resets: "リセット",
         offTrack: "コースアウト",
         penalties: "ペナルティ",
         yellowFlags: "イエローフラッグ",
@@ -3065,6 +3078,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "蓝旗",
         contacts: "碰撞",
+        resets: "重置",
         offTrack: "出赛道",
         penalties: "罚时",
         yellowFlags: "黄旗",
@@ -3285,6 +3299,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "Blauwe vlaggen",
         contacts: "Contacten",
+        resets: "Resets",
         offTrack: "Naast de baan",
         penalties: "Straffen",
         yellowFlags: "Gele vlaggen",
@@ -3505,6 +3520,7 @@ const TRANSLATIONS = {
         // Incidents
         blueFlags: "Blå flag",
         contacts: "Kontakter",
+        resets: "Nulstillinger",
         offTrack: "Uden for banen",
         penalties: "Straffe",
         yellowFlags: "Gule flag",

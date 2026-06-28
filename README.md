@@ -1,22 +1,19 @@
-# LFS Stats v3.2.4
+# LFS Stats v3.3.1
 
 **Statistics generator and interactive viewer for [Live for Speed](https://www.lfs.net/).**
 
-## What's New (since v3.2.3)
+## What's New (since v3.2.4)
+
+- **Car reset tracking**: Each driver's car resets (🔄) are now recorded — shown in the incidents column, a ranked table in the incidents tab, and a summary badge
+- **AI driver support**: AI players now appear correctly in results with a 🤖 badge; LFSWorld profile links are suppressed for AI drivers
+- **Dependencies updated**: InSimDotNet updated to 2.9.4.1; project migrated to SDK-style csproj
+
+### Previous updates (v3.2.4)
 
 - **Fixed qualifying sort**: Drivers with no valid lap time (0 laps completed) no longer appear at the top of qualifying results
-
-### Previous updates (v3.2.1)
-
 - **Fixed DNF visibility**: Drivers who start on the grid but disconnect before completing their first split now correctly appear in results as DNF
 - Improved grid position tracking for early disconnections
 - Better preservation of driver stats when leaving the race
-
-### Previous updates (v3.2.0)
-
-- Improved race results sorting: drivers with same lap count now sorted by completion time
-- Fixed driver comparison chart markers
-- Improved timing accuracy after reconnections
 
 LFS Stats connects to a Live for Speed server (or replay) via InSim, captures race data in real time, and exports it as JSON. The included web viewer renders interactive charts, tables, and analysis from the exported data — no server-side processing required.
 
@@ -336,7 +333,7 @@ LFS Stats/
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| [InSimDotNet](https://github.com/alexmcbride/insimdotnet) | 2.7.2.1 | LFS InSim protocol library |
+| [InSimDotNet](https://github.com/alexmcbride/insimdotnet) | 2.9.4.1 | LFS InSim protocol library |
 | [Newtonsoft.Json](https://www.nuget.org/packages/Newtonsoft.Json) | 13.0.4 | JSON serialization |
 | [Chart.js](https://www.chartjs.org/) | 4.x | Interactive graphs (CDN, viewer only) |
 | [chartjs-plugin-zoom](https://www.chartjs.org/chartjs-plugin-zoom/) | 2.x | Zoom & pan (CDN, viewer only) |

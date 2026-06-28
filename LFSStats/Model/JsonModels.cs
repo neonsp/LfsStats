@@ -51,6 +51,7 @@ namespace LFSStatistics
         public string username { get; set; }
         public string name { get; set; }
         public string nameColored { get; set; }
+        public bool? isAI { get; set; }
     }
 
     // Car entry (race result per car/PLID)
@@ -74,6 +75,7 @@ namespace LFSStatistics
         public int[] positions { get; set; }
         public List<PitStop> pitStops { get; set; }
         public List<StatPenalty> penalties { get; set; }
+        public List<CarResetEntry> resets { get; set; }
         public List<string> bestSplits { get; set; }
         public IncidentCounts incidents { get; set; }
     }
@@ -107,6 +109,11 @@ namespace LFSStatistics
         public int lap { get; set; }
         public string type { get; set; }
         public string value { get; set; }
+    }
+
+    public class CarResetEntry
+    {
+        public int lap { get; set; }
     }
 
     // Rankings

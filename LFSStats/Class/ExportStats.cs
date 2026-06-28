@@ -157,11 +157,13 @@ namespace LFSStatistics
                     if (!playerIndex.ContainsKey(un.Value.userName))
                     {
                         playerIndex[un.Value.userName] = raceData.players.Count;
+                        bool playerIsAI = un.Value.userName.StartsWith("LfsStatsAiDriver_");
                         raceData.players.Add(new PlayerInfo
                         {
                             username = un.Value.userName,
                             name = lfsStripColor(un.Value.nickName),
-                            nameColored = un.Value.nickName
+                            nameColored = un.Value.nickName,
+                            isAI = playerIsAI ? (bool?)true : null
                         });
                     }
                 }
@@ -228,6 +230,7 @@ namespace LFSStatistics
                     topSpeedLap = p.lapBestSpeed > 0 ? (int?)p.lapBestSpeed : null,
                     pitStops = new List<PitStop>(),
                     penalties = new List<StatPenalty>(),
+                    resets = new List<CarResetEntry>(),
                     incidents = new IncidentCounts
                     {
                         yellowFlags = p.yellowFlags,
@@ -341,6 +344,10 @@ namespace LFSStatistics
                             carEntry.bestSplits.Add(SessionStats.LfsTimeToString(sector));
                     }
                 }
+
+                // Car resets
+                foreach (var r in p.resets)
+                    carEntry.resets.Add(new CarResetEntry { lap = r.Lap });
 
                 raceData.cars.Add(carEntry);
             }

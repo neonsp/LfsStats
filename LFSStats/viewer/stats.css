@@ -638,6 +638,12 @@ tr:last-child td {
     text-decoration: underline;
 }
 
+.ai-badge {
+    font-size: 0.7em;
+    opacity: 0.75;
+    vertical-align: middle;
+}
+
 .car-link-with-image {
     display: inline-flex;
     align-items: center;

@@ -183,6 +183,7 @@ namespace LFSStatistics
             insimConnection.Bind<IS_FLG>(OnFlag);
             insimConnection.Bind<IS_MAL>(OnModsAllowed);
             insimConnection.Bind<IS_PEN>(OnPenalty);
+            insimConnection.Bind<IS_CRS>(OnCarReset);
             insimConnection.Bind<IS_TOC>(OnTOC);
             insimConnection.Bind<IS_CON>(OnContact);
             insimConnection.Bind<IS_HLV>(OnHotlapValidity);
@@ -704,6 +705,19 @@ namespace LFSStatistics
             }
         }
 
+        private void OnCarReset(InSimDotNet.InSim insim, IS_CRS crs)
+        {
+            if (sessionInfo.session == SessionInfo.Session.Practice || sessionInfo.session == SessionInfo.Session.None)
+                return;
+            if (sessionFinished)
+                return;
+            if (raceStat.ContainsKey(crs.PLID) && !raceStat[crs.PLID].finished)
+            {
+                raceStat[crs.PLID].UpdateCarReset();
+                LFSStats.WriteLine("CarReset", connectionPlayers[PLIDToUCID[crs.PLID]].nickName, Verbose.Info);
+            }
+        }
+
         private void OnContact(InSimDotNet.InSim insim, IS_CON con)
         {
             // Only count contacts during official sessions (qual/race), not practice
@@ -967,7 +981,10 @@ namespace LFSStatistics
         {
             int LastPosGrid;
 
-            string newPlayerUserName = connectionPlayers[newPlayer.UCID].userName;
+            bool isAI = (newPlayer.PType & PlayerTypes.PLT_AI) != 0;
+            string newPlayerUserName = isAI
+                ? "LfsStatsAiDriver_" + newPlayer.PLID
+                : connectionPlayers[newPlayer.UCID].userName;
 
             int removePLID = PLIDbyUName(newPlayerUserName);
             //                            Console.WriteLine("Nick:" + newPlayer.NickName);
@@ -1073,7 +1090,7 @@ namespace LFSStatistics
             }
 
             PLIDToUCID[newPlayer.PLID] = newPlayer.UCID;
-            string nplUserName = UserNameByUCID(newPlayer.UCID);
+            string nplUserName = isAI ? newPlayerUserName : UserNameByUCID(newPlayer.UCID);
 
             if (!raceStat.ContainsKey(newPlayer.PLID))
             {

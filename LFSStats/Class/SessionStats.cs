@@ -19,6 +19,12 @@ namespace LFSStatistics
             this.Reason = Reason;
         }
     }
+    class CarReset
+    {
+        public int Lap;
+        public CarReset(int lap) { this.Lap = lap; }
+    }
+
     class Toc
     {
         public string oldNickName;
@@ -168,7 +174,8 @@ namespace LFSStatistics
         public List<Pit> pit = new List<Pit>();
         public List<Penalty> pen = new List<Penalty>();
         public List<Toc> toc = new List<Toc>();
-        public List<TimingEvent> timingEvents = new List<TimingEvent>();  // Track split and lap times with ETime for position calculation
+        public List<TimingEvent> timingEvents = new List<TimingEvent>();
+        public List<CarReset> resets = new List<CarReset>();  // Track split and lap times with ETime for position calculation
 
         // Disconnection tracking
         public bool disconnected = false;
@@ -443,6 +450,14 @@ namespace LFSStatistics
                 BestSector[maxSplit] = sector;
                 BestSectorLap[maxSplit] = lapsDone;
             }
+        }
+
+        public void UpdateCarReset()
+        {
+            if (finished == true)
+                return;
+            int LapDone = lap.Count + 1;
+            resets.Add(new CarReset(LapDone));
         }
 
         public void UpdatePen(int OldPen, int NewPen, int Reason)
