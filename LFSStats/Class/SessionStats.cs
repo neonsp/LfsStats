@@ -548,7 +548,8 @@ namespace LFSStatistics
         {
             this.totalTime = totalTime;
             this.resultNum = resultNum;
-            carName = CName;
+            if (string.IsNullOrEmpty(carName) || carName == "000000")
+                carName = CName;
             this.numStop = numStop;
 
             penalty = "";

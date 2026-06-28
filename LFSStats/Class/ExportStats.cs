@@ -564,8 +564,10 @@ namespace LFSStatistics
 
         private static int CalculateSplitsPerLap(List<SessionStats> raceStatsList)
         {
-            var winner = raceStatsList.OrderBy(d => d.finalPos).First();
-            return winner.timingEvents.Where(e => e.Split > 0).Max(e => e.Split);
+            var winner = raceStatsList.OrderBy(d => d.finalPos).FirstOrDefault();
+            if (winner == null) return 0;
+            var splits = winner.timingEvents.Where(e => e.Split > 0).ToList();
+            return splits.Count > 0 ? splits.Max(e => e.Split) : 0;
         }
 
         private static Dictionary<string, List<int>> CalculatePositions(List<SessionStats> raceStatsList)

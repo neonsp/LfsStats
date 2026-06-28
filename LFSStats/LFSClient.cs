@@ -207,8 +207,8 @@ namespace LFSStatistics
                 Port = config.IpEndPoint.Port,
                 Admin = config.AdminPassword,
                 Flags = flags,
-                Interval = RefreshInterval
-
+                Interval = RefreshInterval,
+                IName = LFSStats.Title + " " + LFSStats.VersionShort
             };
             if (config.TcpMode)
             {
@@ -265,6 +265,9 @@ namespace LFSStatistics
             catch (Exception ex)
             {
                 LFSStats.WriteLine("Failed to initialize InSim: " + ex.Message);
+                LFSStats.WriteLine("Check that LFS is running and InSim is enabled on the configured host/port.");
+                Console.WriteLine("\nPress any key to exit...");
+                Console.ReadKey(true);
                 LFSStats.Exit(1);
             }
         }
@@ -580,12 +583,12 @@ namespace LFSStatistics
                     case SessionInfo.Session.Qualification:
                         LFSStats.WriteLine("End of qualification by STAte", Verbose.Session);
                         sessionFinished = true;
-                        ExportQualStats(false);
+                        if (HasExportableData()) { if (!ExportQualStats(false)) ExportQualStats(true); }
                         break;
                     case SessionInfo.Session.Race:
                         LFSStats.WriteLine("End of race by STAte", Verbose.Session);
                         sessionFinished = true;
-                        ExportStatistics(false);
+                        if (HasExportableData()) { if (!ExportStatistics(false)) ExportStatistics(true); }
                         break;
                 }
                 LFSStats.ConsoleTitleRestore();
@@ -845,11 +848,24 @@ namespace LFSStatistics
             }
             if (tiny.SubT == TinyType.TINY_REN)
             {
+                switch (sessionInfo.session)
+                {
+                    case SessionInfo.Session.Qualification:
+                        LFSStats.WriteLine("End of qualification by REN", Verbose.Session);
+                        sessionFinished = true;
+                        if (HasExportableData()) { if (!ExportQualStats(false)) ExportQualStats(true); }
+                        else LFSStats.WriteLine("No qual data to export, skipping", Verbose.Session);
+                        break;
+                    case SessionInfo.Session.Race:
+                        LFSStats.WriteLine("End of race by REN", Verbose.Session);
+                        sessionFinished = true;
+                        if (HasExportableData()) { if (!ExportStatistics(false)) ExportStatistics(true); }
+                        else LFSStats.WriteLine("No race data to export, skipping", Verbose.Session);
+                        break;
+                }
+                LFSStats.ConsoleTitleRestore();
                 sessionInfo.ExitSession();
-                //TODO ASK save stats
-#if DEBUG
-                // Console.WriteLine("Race ENd (return to entry screen)");
-#endif
+                sessionFinished = false;
             }
         }
 
@@ -878,13 +894,13 @@ namespace LFSStatistics
                 case SessionInfo.Session.Qualification: // End of Qualification
                     LFSStats.WriteLine("End of qualification by Race Start", Verbose.Session);
                     sessionFinished = true;
-                    ExportStatistics(true);
+                    if (HasExportableData()) ExportQualStats(true);
                     break;
 
                 case SessionInfo.Session.Race:          // End of Race
                     LFSStats.WriteLine("End of race by Race Start", Verbose.Session);
                     sessionFinished = true;
-                    ExportStatistics(true);
+                    if (HasExportableData()) ExportStatistics(true);
                     break;
             }
 
@@ -1113,7 +1129,8 @@ namespace LFSStatistics
             raceStat[newPlayer.PLID].userName = nplUserName;
             raceStat[newPlayer.PLID].NickName = newPlayer.PName;
             raceStat[newPlayer.PLID].allPlayers[nplUserName] = new PlayerIdentity(nplUserName, newPlayer.PName);
-            raceStat[newPlayer.PLID].carName = newPlayer.CName;
+            if (string.IsNullOrEmpty(raceStat[newPlayer.PLID].carName) || !raceStat[newPlayer.PLID].finished)
+                raceStat[newPlayer.PLID].carName = newPlayer.CName;
             raceStat[newPlayer.PLID].Plate = newPlayer.Plate;
             raceStat[newPlayer.PLID].flags = newPlayer.Flags;
             if (sessionInfo.InQualification())
@@ -1257,10 +1274,13 @@ namespace LFSStatistics
         /// Exports qualification statistics
         /// </summary>
         /// <param name="fileName">Name of statistics</param>
-        private void ExportQualStats(bool isRST)
+        private bool HasExportableData() =>
+            raceStat.Values.Any(d => d.lap.Count > 0) || disconnectedDrivers.Any(d => d.lap.Count > 0);
+
+        private bool ExportQualStats(bool isRST)
         {
             string fileName;
-            if (!ExportOrNot(isRST, out fileName)) return;
+            if (!ExportOrNot(isRST, out fileName)) return false;
             Directory.CreateDirectory(config.QualDir);  // @ is used to interpret string literally, since it may have forward or backslash
 #if DEBUG
             Stopwatch sw = new Stopwatch();
@@ -1311,16 +1331,17 @@ namespace LFSStatistics
 
             //ExportStats.qualhtmlResult(raceStat, fileName, qualDir, sessionInfo, maxTimeQualIgnore);
             //LFSStats.WriteLineFromAsync("Qualification Stats exported", Verbose.Program);
+            return true;
         }
 
         /// <summary>
         /// Exports race statistics
         /// </summary>
         /// <param name="isRST">if set to <c>true</c> [is RaceSTart], <c>false</c> [is STAte].</param>
-        private void ExportStatistics(bool isRST)
+        private bool ExportStatistics(bool isRST)
         {
             string fileName;
-            if (!ExportOrNot(isRST, out fileName)) return;  // decides whether to export and generates a filename or asks user for one
+            if (!ExportOrNot(isRST, out fileName)) return false;  // decides whether to export and generates a filename or asks user for one
 #if DEBUG
             Stopwatch sw = new Stopwatch();
 #endif
@@ -1367,6 +1388,7 @@ namespace LFSStatistics
             //Task.WaitAll(exportTask);
             Console.WriteLine("Stats export delay (" + sw.ElapsedMilliseconds + "ms" + ")");
 #endif
+            return true;
         }
 
         /// <summary>

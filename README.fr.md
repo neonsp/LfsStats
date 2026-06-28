@@ -1,11 +1,21 @@
-# LFS Stats v3.3.1
+# LFS Stats v3.3.2
 
 **Générateur de statistiques et visualiseur interactif pour [Live for Speed](https://www.lfs.net/).**
 
-## Nouveautés (depuis v3.2.4)
+## Nouveautés (v3.3.2)
 
-- **Suivi des réinitialisations de voiture** : Les réinitialisations de voiture (🔄) de chaque pilote sont maintenant enregistrées — affichées dans la colonne incidents, dans un tableau classé dans l'onglet incidents et dans un badge récapitulatif
-- **Support des pilotes IA** : Les pilotes IA apparaissent maintenant correctement dans les résultats avec un badge 🤖 ; les liens de profil LFSWorld sont masqués pour les pilotes IA
+- **Export des replays corrigé** : Les statistiques s'exportent correctement à la fin ou à la sortie d'un replay (gestionnaire TINY_REN)
+- **Nom de voiture corrigé** : Les résultats affichent la voiture utilisée pendant la course, pas celle changée après l'arrivée
+- **Erreur de connexion** : Message clair et pause avec touche au lieu d'une sortie silencieuse en cas d'échec de connexion
+- **Booléens dans la config** : `yes`/`no` acceptés en plus de `true`/`false` dans LFSStats.cfg
+- **Icône de reset** : Les resets de voiture utilisent ♻️ au lieu de 🔄 pour les distinguer de l'actualisation de tour
+- **UI** : Les sections pénalités et drapeaux bleus sont masquées dans le visualiseur si aucun n'est survenu
+- **IName** : LFS identifie maintenant la connexion InSim comme `LFSStats <version>`
+
+### Mises à jour précédentes (v3.3.1)
+
+- **Suivi des réinitialisations de voiture** : Les réinitialisations de voiture de chaque pilote sont enregistrées — affichées dans la colonne incidents, dans un tableau classé dans l'onglet incidents et dans un badge récapitulatif
+- **Support des pilotes IA** : Les pilotes IA apparaissent correctement dans les résultats avec un badge 🤖 ; les liens de profil LFSWorld sont masqués pour les pilotes IA
 - **Dépendances mises à jour** : InSimDotNet mis à jour en 2.9.4.1 ; projet migré vers csproj SDK-style
 
 ### Mises à jour précédentes (v3.2.4)

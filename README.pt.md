@@ -1,11 +1,21 @@
-# LFS Stats v3.3.1
+# LFS Stats v3.3.2
 
 **Gerador de estatísticas e visualizador interativo para [Live for Speed](https://www.lfs.net/).**
 
-## Novidades (desde v3.2.4)
+## Novidades (v3.3.2)
 
-- **Rastreamento de resets de carro**: Os resets de carro (🔄) de cada piloto são agora registados — visíveis na coluna de incidentes, numa tabela classificada no separador de incidentes e num badge de resumo
-- **Suporte a pilotos IA**: Os pilotos IA aparecem agora corretamente nos resultados com um badge 🤖; os links de perfil do LFSWorld são ocultados para pilotos IA
+- **Exportação de replays corrigida**: As estatísticas exportam corretamente ao terminar ou sair de um replay (handler TINY_REN)
+- **Nome do carro corrigido**: Os resultados mostram o carro usado durante a corrida, não o trocado após terminar
+- **Erro de conexão**: Mensagem clara e pausa com tecla em vez de saída silenciosa ao falhar a conexão
+- **Booleanos na config**: `yes`/`no` aceitos além de `true`/`false` no LFSStats.cfg
+- **Ícone de reset**: Os resets de carro usam ♻️ em vez de 🔄 para distingui-los da atualização de volta
+- **UI**: As secções de penalizações e bandeiras azuis ficam ocultas no visualizador se não houver nenhuma
+- **IName**: O LFS identifica agora a conexão InSim como `LFSStats <versão>`
+
+### Atualizações anteriores (v3.3.1)
+
+- **Rastreamento de resets de carro**: Os resets de carro de cada piloto são registados — visíveis na coluna de incidentes, numa tabela classificada no separador de incidentes e num badge de resumo
+- **Suporte a pilotos IA**: Os pilotos IA aparecem corretamente nos resultados com um badge 🤖; os links de perfil do LFSWorld são ocultados para pilotos IA
 - **Dependências atualizadas**: InSimDotNet atualizado para 2.9.4.1; projeto migrado para csproj SDK-style
 
 ### Atualizações anteriores (v3.2.4)

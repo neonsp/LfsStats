@@ -133,13 +133,13 @@ namespace LFSStatistics
             // administrator password
             if (!config.TryGetValue(_adminPassword, out adminPassword)) adminPassword = defAdminPassword;
             // TCP mode
-            if (!config.TryGetValue(_tcpMode, out tmp) || !bool.TryParse(tmp, out tcpMode))
+            if (!config.TryGetValue(_tcpMode, out tmp) || !TryParseBool(tmp, out tcpMode))
             {
                 ReportError(_tcpMode, defTCPmode, tmp);
                 tcpMode = defTCPmode;
             }
             // isLocal
-            if (!config.TryGetValue(_isLocal, out tmp) || !bool.TryParse(tmp, out isLocal))
+            if (!config.TryGetValue(_isLocal, out tmp) || !TryParseBool(tmp, out isLocal))
             {
                 ReportError(_isLocal, defIsLocal, tmp);
                 isLocal = defIsLocal;
@@ -169,7 +169,7 @@ namespace LFSStatistics
                 exportOnRaceSTart = defExportOnRaceSTart;
             }
             // ask for file name on race start
-            if (!config.TryGetValue(_askForFileNameOnRST, out tmp) || !bool.TryParse(tmp, out askForFileNameOnRST))
+            if (!config.TryGetValue(_askForFileNameOnRST, out tmp) || !TryParseBool(tmp, out askForFileNameOnRST))
             {
                 ReportError(_askForFileNameOnRST, defAskForFileNameOnRST, tmp);
                 askForFileNameOnRST = defAskForFileNameOnRST;
@@ -181,7 +181,7 @@ namespace LFSStatistics
                 exportOnSTAte = defExportOnSTAte;
             }
             // ask for file name on state
-            if (!config.TryGetValue(_askForFileNameOnSTA, out tmp) || !bool.TryParse(tmp, out askForFileNameOnSTA))
+            if (!config.TryGetValue(_askForFileNameOnSTA, out tmp) || !TryParseBool(tmp, out askForFileNameOnSTA))
             {
                 ReportError(_askForFileNameOnSTA, defAskForFileNameOnSTA, tmp);
                 askForFileNameOnSTA = defAskForFileNameOnSTA;
@@ -191,7 +191,7 @@ namespace LFSStatistics
             // Default logo URL for JSON export
             if (!config.TryGetValue(_defaultLogoUrl, out defaultLogoUrl)) defaultLogoUrl = defDefaultLogoUrl;
             // Preserve laps on ESC pit
-            if (!config.TryGetValue(_preserveLapsOnPit, out tmp) || !bool.TryParse(tmp, out preserveLapsOnPit))
+            if (!config.TryGetValue(_preserveLapsOnPit, out tmp) || !TryParseBool(tmp, out preserveLapsOnPit))
             {
                 ReportError(_preserveLapsOnPit, defPreserveLapsOnPit, tmp);
                 preserveLapsOnPit = defPreserveLapsOnPit;
@@ -258,6 +258,14 @@ namespace LFSStatistics
                 LFSStats.ErrorWriteException("Configuration file exception.", ex);
             }
             return config;
+        }
+
+        private static bool TryParseBool(string value, out bool result)
+        {
+            if (bool.TryParse(value, out result)) return true;
+            if (string.Equals(value, "yes", StringComparison.OrdinalIgnoreCase)) { result = true; return true; }
+            if (string.Equals(value, "no", StringComparison.OrdinalIgnoreCase)) { result = false; return true; }
+            return false;
         }
 
         private static void ReportError(string parameter, object defValue, object value)

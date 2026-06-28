@@ -1,10 +1,20 @@
-# LFS Stats v3.3.1
+# LFS Stats v3.3.2
 
 **Statistics generator and interactive viewer for [Live for Speed](https://www.lfs.net/).**
 
-## What's New (since v3.2.4)
+## What's New (v3.3.2)
 
-- **Car reset tracking**: Each driver's car resets (🔄) are now recorded — shown in the incidents column, a ranked table in the incidents tab, and a summary badge
+- **Replay export fixed**: Stats now correctly export when a replay finishes or is exited (TINY_REN handler)
+- **Car name fixed**: Results now show the car used during the race, not a car changed after finishing
+- **Connection error**: Friendly message + key-press pause instead of silent exit on connection failure
+- **Config booleans**: `yes`/`no` now accepted in addition to `true`/`false` in LFSStats.cfg
+- **Reset icon**: Car resets now use ♻️ instead of 🔄 to distinguish from lap refresh
+- **UI**: Penalties and blue flags sections hidden in viewer when none occurred
+- **IName**: LFS now identifies the InSim connection as `LFSStats <version>`
+
+### Previous updates (v3.3.1)
+
+- **Car reset tracking**: Each driver's car resets are recorded — shown in the incidents column, a ranked table in the incidents tab, and a summary badge
 - **AI driver support**: AI players now appear correctly in results with a 🤖 badge; LFSWorld profile links are suppressed for AI drivers
 - **Dependencies updated**: InSimDotNet updated to 2.9.4.1; project migrated to SDK-style csproj
 

@@ -1,7 +1,7 @@
 ﻿// LFS Stats Viewer - Complete JavaScript Renderer
 // Reads JSON and renders all statistics
 
-const LFS_STATS_VERSION = '3.3.1';
+const LFS_STATS_VERSION = '3.3.2';
 
 let raceData = null;
 
@@ -414,7 +414,7 @@ function renderHeader() {
     if (flags.length > 0) {
         const flagLabels = {
             mustPit: { icon: '🔧', label: t('flagMustPit') },
-            canReset: { icon: '🔄', label: t('flagCanReset') },
+            canReset: { icon: '♻️', label: t('flagCanReset') },
             noRefuel: { icon: '⛽', label: t('flagNoRefuel') },
             noFloodLights: { icon: '🌙', label: t('flagNoFlood') },
             showFuel: { icon: '📊', label: t('flagShowFuel') },
@@ -655,7 +655,7 @@ function renderSummaryCard() {
     // 10. Most resets
     if (mostResetsVal > 0) {
         cards += `<div class="summary-stat" ${sc('incidents')}>
-            <span class="stat-icon">🔄</span>
+            <span class="stat-icon">♻️</span>
             <span class="stat-value">${mostResetsVal}</span>
             <span class="stat-label">${t('resets')}</span>
             <span class="stat-detail">${driverLink(mostResets)}</span>
@@ -720,7 +720,7 @@ function renderResults() {
                     if (d.incidents.blueFlags > 0) incidents.push(`<span title="${t('blueFlags')}">🔵 ${d.incidents.blueFlags}</span>`);
                     if (d.incidents.contacts > 0) incidents.push(`<span title="${t('contacts')}">💥 ${d.incidents.contacts}</span>`);
                     const resetCount = (d.resets || []).length;
-                    if (resetCount > 0) incidents.push(`<span title="${t('resets')}">🔄 ${resetCount}</span>`);
+                    if (resetCount > 0) incidents.push(`<span title="${t('resets')}">♻️ ${resetCount}</span>`);
                     const incidentsStr = incidents.length > 0 ? incidents.join(' | ') : '';
                     
                     // Build car link with image
@@ -4222,6 +4222,7 @@ function renderIncidents() {
                 </table>
             </div>
             
+            ${blueFlags.length > 0 ? `
             <div class="section-box">
                 <h3>🔵 ${t("blueFlags")}</h3>
                 <table class="compact-table">
@@ -4239,10 +4240,11 @@ function renderIncidents() {
                                 <td>${getDriverLink(d)}</td>
                                 <td class="text-info">${d.incidents.blueFlags}</td>
                             </tr>
-                        `).join('') || '<tr><td colspan="3" class="empty-state">No blue flags</td></tr>'}
+                        `).join('')}
                     </tbody>
                 </table>
             </div>
+            ` : ''}
             
             <div class="section-box">
                 <h3>💥 ${t("contacts")}</h3>
@@ -4268,7 +4270,7 @@ function renderIncidents() {
             
             ${resets.length > 0 ? `
             <div class="section-box">
-                <h3>🔄 ${t("resets")}</h3>
+                <h3>♻️ ${t("resets")}</h3>
                 <table class="compact-table">
                     <thead>
                         <tr>
@@ -4292,27 +4294,27 @@ function renderIncidents() {
             </div>
             ` : ''}
 
+            ${penalties.length > 0 ? `
             <div class="section-box">
                 <h3>⚠️ ${t("penalties")}</h3>
-                ${penalties.length > 0 ? `
-                    <table class="compact-table">
-                        <thead>
+                <table class="compact-table">
+                    <thead>
+                        <tr>
+                            <th>${t("driver")}</th>
+                            <th>${t("penalties")}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${penalties.map(d => `
                             <tr>
-                                <th>${t("driver")}</th>
-                                <th>${t("penalties")}</th>
+                                <td>${getDriverLink(d)}</td>
+                                <td>${d.penalties.length} penalty(ies)</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            ${penalties.map(d => `
-                                <tr>
-                                    <td>${getDriverLink(d)}</td>
-                                    <td>${d.penalties.length} penalty(ies)</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                ` : '<p class="text-success text-center p-20">✓ No penalties issued</p>'}
+                        `).join('')}
+                    </tbody>
+                </table>
             </div>
+            ` : ''}
         </div>
     `;
     
